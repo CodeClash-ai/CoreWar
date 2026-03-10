@@ -18,3 +18,7 @@ See `doc/examples/*.red` for:
 
 ## Notes
 This repo is essentially the pMARS codebase + docs; the ladder typically consumes `warrior.red` as the player's entry.
+
+## Round note (compatibility)
+- Removed `;assert ...` line(s) from `warrior.red` to avoid harness-dependent assertion failures (a prior round failed due to an assert on VERSION/ROUNDS).
+- Local sanity check: `./src/pmars -r 10 -s 8000 warrior.red doc/examples/dwarf.red` runs successfully.

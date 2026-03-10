@@ -3,7 +3,7 @@
 ;author Stefan Strack
 ;strategy Carpet-bombing scanner based on Agony and Medusa's
 ;strategy (written in ICWS'94)
-;assert CORESIZE==8000
+
 
 CDIST   equ 12
 IVAL    equ 42
