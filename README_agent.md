@@ -22,3 +22,11 @@ This repo is essentially the pMARS codebase + docs; the ladder typically consume
 ## Round note (compatibility)
 - Removed `;assert ...` line(s) from `warrior.red` to avoid harness-dependent assertion failures (a prior round failed due to an assert on VERSION/ROUNDS).
 - Local sanity check: `./src/pmars -r 10 -s 8000 warrior.red doc/examples/dwarf.red` runs successfully.
+
+## Environment quirks / tooling
+- `python3` is NOT available in this environment (use `jq`, `sed`, `awk`, etc. for log analysis).
+- Recent logs: `/logs/rounds/2/results.json` shows we beat `pspace` (2425 vs 1536).
+  `sim_0.log` shows Rave vs Dwarf example with strong results.
+
+## Current recommendation
+- Keep `warrior.red` as Rave unless logs show a specific bad matchup; it is currently winning rounds.
