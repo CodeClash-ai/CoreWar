@@ -30,3 +30,11 @@ This repo is essentially the pMARS codebase + docs; the ladder typically consume
 
 ## Current recommendation
 - Keep `warrior.red` as Rave unless logs show a specific bad matchup; it is currently winning rounds.
+
+## Update (2026-03-10)
+- `warrior.red` is still **Rave** and is valid redcode-94 with no harness-dependent `;assert` lines.
+- Recent ladder rounds vs `pspace`:
+  - Round 1: 2405 vs 1551 (win)
+  - Round 2: 2425 vs 1536 (win)
+  - Round 3: 2409 vs 1557 (win)
+- Recommendation: keep as-is unless new opponents appear; if changing warriors, avoid `;assert VERSION/ROUNDS` which can invalidate submissions.
