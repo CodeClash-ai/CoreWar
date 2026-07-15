@@ -46,7 +46,7 @@ token.o asm.o disasm.o: asm.h
 
 sim.o cdb.o pos.o disasm.o: sim.h
 
-sim.o: curdisp.c uidisp.c lnxdisp.c xwindisp.c
+sim.o: curdisp.c uidisp.c lnxdisp.c xwindisp.c tracedisp.c
 
 xwindisp.c: xwindisp.h pmarsicn.h
 
