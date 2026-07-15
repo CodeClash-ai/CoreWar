@@ -334,6 +334,7 @@ extern int SWITCH_V;
 extern int SWITCH_o;
 extern int SWITCH_Q;
 extern char *SWITCH_eq;
+extern char *traceFileName;
 #ifdef VMS
 extern int SWITCH_D;
 #endif
