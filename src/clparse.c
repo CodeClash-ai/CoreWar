@@ -72,7 +72,7 @@ extern char *credits_screen1, *credits_screen2, *credits_screen3, *usage_screen,
        *optSort, *optView, *optScoreFormula, *optDIAOutput, *noWarriorFile,
        *fFExclusive, *coreSizeTooSmall, *dLessThanl, *FLessThand,
        *outOfMemory, *badScoreFormula, *optPSpaceSize, *pSpaceTooBig,
-       *optPermutate, *permutateMultiWarrior, *optAssemble;
+       *optPermutate, *permutateMultiWarrior, *optAssemble, *optTrace;
 
 #ifdef RWLIMIT
 extern char *optReadLimit, *optWriteLimit, *badRWLimit;
@@ -524,6 +524,7 @@ parse_param(largc, largv)
   record('A', clp_bool, &SWITCH_A, 0, 1,
 	 0, optAssemble);
   record('=', clp_str, &SWITCH_eq, 0, 0, 0, optScoreFormula);
+  record('T', clp_str, &traceFileName, 0, 0, 0, optTrace);
   record('Q', clp_int, &SWITCH_Q, -1, INT_MAX, -1, NULL);
 #if defined(DOSTXTGRAPHX) || defined(DOSGRXGRAPHX)  || defined(LINUXGRAPHX) \
     || defined(XWINGRAPHX)
