@@ -93,19 +93,10 @@ extern void sighandler(int dummy);
 #endif
 
 #else                                /* !GRAPHX */
-#define display_init()
-#define display_clear()
-#define display_read(addr)
-#define display_write(addr)
-#define display_dec(addr)
-#define display_inc(addr)
-#define display_exec(addr)
-#define display_spl(warrior,tasks)
-#define display_dat(address,warrior,tasks)
-#define display_die(warnum)
-#define display_close()
-#define display_cycle()
-#define display_push(val)
+/* No on-screen display compiled in. Route the display hooks to the file-trace backend,
+ * which only emits anything when -T <file> is given (see tracedisp.c); otherwise every hook
+ * is a single null-check branch, leaving scored runs at full speed. */
+#include "tracedisp.c"
 #endif
 #endif
 #endif
