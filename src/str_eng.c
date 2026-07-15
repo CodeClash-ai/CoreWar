@@ -422,6 +422,7 @@ char   *optReadLimit = "Read limit size";
 char   *optWriteLimit = "Write limit size";
 #endif
 char   *optAssemble = "Assemble warriors only";
+char   *optTrace = "Trace battle to file $ (for replays)";
 #if defined(XWINGRAPHX)
 char   *optXOpt[] = {
   "Display to connect to",
