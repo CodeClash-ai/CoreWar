@@ -58,6 +58,7 @@ int     SWITCH_V;
 int     SWITCH_o;
 int     SWITCH_Q = -1;                /* not set */
 char   *SWITCH_eq = DEFAULTSCORE;
+char   *traceFileName = NULL;        /* -T: file to write the battle trace to (replays) */
 #ifdef VMS
 int     SWITCH_D;
 #endif
