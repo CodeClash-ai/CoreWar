@@ -118,3 +118,75 @@ of the above in one go.
    all its code paths (`win`/`loss`/`tie`/`naive`) are literally `jmp 0`, so
    it never actually uses P-space to change strategy despite reading it. No
    action needed unless the opponent implementation changes.
+
+## Round 1 update (this session)
+
+### What I found
+- Confirmed via `/logs/rounds/0/results.json` + `sim_*.jsonl` that the
+  **actual round-0 opponent was `doc/examples/validate.red`** ("Validate
+  1.1R by Stefan Strack", a pMARS system-compliance test warrior that
+  self-ties forever if the interpreter is ICWS'94-compliant), NOT the
+  `pspace_opponent.red` / "P-space demo" that earlier notes assumed. The
+  harness reported `"scores": {"validate": 0, "sonnet-5": 4000}` — a clean
+  sweep, confirmed by re-running `pmars -r 200 -b warrior.red
+  doc/examples/validate.red` (200/0/0) and by manually checking all 100
+  sampled `sim_*.jsonl` traces in `/logs/rounds/0` (`"winner": "sonnet-5"`
+  in every single one, zero draws/losses).
+- Also note: this repo's git history (`git log --oneline`) contains commits
+  referring to a separate **ladder-tournament** context ("Rung 1/264
+  (pspace, elo #264)...") that is unrelated to the round-based
+  `/logs/rounds/N` scoring described in the current task instructions —
+  don't be confused by those commit messages; they're from a different
+  play mode / branch history, not necessarily this 5-round PvP series. Only
+  trust `/logs/rounds/*/results.json` + `sim_*.jsonl` for ground truth on
+  what actually happened in this series.
+- Current `warrior.red` (QuadSweep, unchanged this round) still tests as
+  very strong against everything we have real examples for:
+  - `doc/examples/validate.red` (the *actual* observed opponent): **200/0/0**
+  - `opponents/pspace_opponent.red`: **100/0/0**
+  - `doc/examples/dwarf.red` (generic step=4 dwarf sanity check): **62/38**
+    win (200-round sample was 117/83 last round, consistent)
+  - self-play: no crashes, healthy ~55/45-ish split (first-mover edge)
+
+### New finding: pure-imp weakness (untested opponent type, but worth knowing)
+- I added `opponents/imp.red` (classic 1-instruction `mov 0, 1` imp) as a
+  stress test. **Result: 50/0/50 (0 wins, 0 losses, 50 ties) — every single
+  game ties**, never a loss, but also never a win.
+- Root cause (checked via `-T` trace, see `docs/tracedisp.c` grammar
+  comment for the `e/w/s/x/D` stream format): our own ~36-word program sits
+  at a **fixed, stationary, completely unprotected** address range for the
+  entire game. A single imp doing `mov 0,1` performs a full lap of the
+  *entire* core every `coresize` cycles (8000) and, over the 80000-cycle
+  budget (10 laps), inevitably crawls straight through our code's address
+  range and overwrites it with copies of itself — this is why exec
+  addresses for warrior 0 end up executing outside its original 0-35
+  region late in the trace. This is a **known classic CoreWar phenomenon**
+  (plain Dwarf vs. plain Imp is a famously imp-favoring/tie-prone matchup
+  for exactly this reason — Dwarf's own code is undefended) and is *not* a
+  bug in QuadSweep specifically; it's inherent to any bomber that doesn't
+  defend/relocate its own code.
+- **I did not attempt a fix this round** — ran out of step budget to
+  safely redesign + re-verify (would need e.g. a self-refresh/"stone"
+  guard, a decoy/imp-gate ahead of our own code, or relocating code
+  behind a DAT wall — any of which needs careful self-play + regression
+  testing against `validate.red`/`dwarf.red`/`pspace_opponent.red` before
+  trusting it). Since our **actual recorded opponent (`validate.red`) is
+  not an imp** and we already have a clean 100% win rate against it, I
+  judged it safer to leave `warrior.red` unchanged this round rather than
+  risk an untested rewrite with only a few steps left to verify it.
+
+### Recommendation for next teammate
+1. **If future round logs show ties (not losses) reappearing**, suspect the
+   opponent may include imp-like full-core-sweep behavior — revisit the
+   imp-defense idea above.
+2. Otherwise, if `validate.red`-like or `pspace_opponent.red`-like
+   (passive/self-looping) behavior continues to be what we face, current
+   `warrior.red` is already essentially optimal (100% win, 0 ties/losses)
+   and probably doesn't need further tuning — spend the budget instead on
+   verifying against a wider variety of reference warriors if any show up
+   in `doc/examples/` or new opponent branches.
+3. `opponents/imp.red` (new, added this round) is a good quick regression
+   test to keep around: `pmars -r 50 -b warrior.red opponents/imp.red`
+   should currently show `0 0 50` (all ties) — if that ever turns into
+   losses, something regressed further; if you add an imp-defense, this is
+   the test that should start showing wins.
