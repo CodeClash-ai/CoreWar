@@ -1,27 +1,31 @@
 # Agent notes for CoreWar bot
 
-Current submitted warrior: `warrior.red` = **Wide Carpet Janitor**.
+Current submitted warrior: `warrior.red` = **Maximum Carpet Janitor**.
 
-Round context:
+Opponent context:
 
-- `/logs/rounds/0`: both players used the starter `P-space demo`, causing all ties.
-- Round 1 we submitted `Patient Janitor`, a slow deterministic scanner, and won 100%.
-- `/logs/rounds/1/results.json`: `gpt-5-5` beat `pspace` 1000-0. The saved traces still show the opponent as the unchanged passive `P-space demo` by Stefan. Its process eventually sits forever on a `jmp 0`.
-- The opponent source is available via `git show human/pspace:warrior.red`.
+- We are on the pspace ladder rung. The opponent source is the passive starter `P-space demo` by Stefan (`git show adfa5f0:warrior.red`).
+- The saved replay traces in `/logs/rounds/0` show the opponent still does not attack; after its P-space bookkeeping it parks on `jmp 0` forever.
+- Earlier entries already won 100%; the main improvement available for this fixed matchup is reducing kill time / avoiding any tie risk.
 
-Change made in round 2:
+Current strategy:
 
-- Replaced the slow scanner with a faster bidirectional DAT carpet specialized for this matchup.
-- It writes `DAT.F #0,#0` outward in both directions starting just beyond the minimum loader separation, with 4 forward and 4 backward bombs per loop.
-- This should hit the passive opponent's code much sooner than the round-1 linear scan while still avoiding our own tiny body before reaching any legal opponent placement.
+- Fully matchup-specialized, not a general-purpose Core War warrior.
+- Uses the full 100-instruction pMARS length budget as an unrolled bidirectional carpet.
+- `fptr` and `bptr` start just outside our own code / the legal minimum start separation (current offsets +99 and -100) and write `DAT.F #0,#0` outward in both directions.
+- There are 48 forward + 48 backward `mov` bombs per loop, plus two pointer cells, a loop jump, and the bomb = 100 instructions.
 
-Validation run locally with pMARS:
+Validation performed this round:
 
 ```sh
-./src/pmars -b -r 1000 warrior.red <(git show human/pspace:warrior.red)
-# Wide Carpet Janitor scores 3000, P-space demo scores 0, Results: 1000 0 0
-./src/pmars -b -r 1000 <(git show human/pspace:warrior.red) warrior.red
-# P-space demo scores 0, Wide Carpet Janitor scores 3000, Results: 0 1000 0
+./src/pmars -A warrior.red
+./src/pmars -b -r 5000 warrior.red <(git show adfa5f0:warrior.red)
+# Maximum Carpet Janitor scores 15000, P-space demo scores 0, Results: 5000 0 0
+./src/pmars -b -r 5000 <(git show adfa5f0:warrior.red) warrior.red
+# P-space demo scores 0, Maximum Carpet Janitor scores 15000, Results: 0 5000 0
 ```
 
-Weakness: this remains matchup-specialized. It is not meant to beat active stones/papers/imps/scanners; if future logs show that the opponent changed away from the passive p-space demo, replace this with a more general warrior (stone/imp or paper/stone hybrid) rather than continuing to optimize the carpet.
+Caution for future teammates:
+
+- This is deliberately fragile against active stones/papers/imps/scanners. If logs show the opponent changed away from the passive P-space demo, replace it with a real general warrior rather than further optimizing the DAT carpet.
+- If still on the same pspace opponent, keeping this warrior is likely optimal enough: it has tested 100% from both player orders.
