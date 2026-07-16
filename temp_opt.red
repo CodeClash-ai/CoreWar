@@ -1,12 +1,12 @@
 ;redcode-94
 ;name Silk Warrior 3
 ;author Silk
-;strategy Replicator (Silk) with optimized step sizes
+;strategy Replicator (Silk)
 ;assert VERSION >= 80
 
-step1   equ 2933
-step2   equ 6809
-step3   equ 1211
+step1   equ 1437
+step2   equ 7311
+step3   equ 3179
 
 init    spl     1,      <3445
         spl     1,      <5005
