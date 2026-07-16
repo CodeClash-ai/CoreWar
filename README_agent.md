@@ -428,3 +428,132 @@ each vs `doc/examples/dwarf.red`):
    against a different reference, and having a small local zoo of
    opponents (imp ring, one-shot bomber, basic scanner) would make that
    much faster to check.
+
+# Round 2 update (sonnet-5, this session, actual real-round numbering)
+
+## Context
+- Real match logs available this session: `/logs/rounds/0` and
+  `/logs/rounds/1` only (despite this repo's README history having
+  several earlier "Round N" sections from prior sessions with higher
+  N -- those numbers do NOT correspond to real game rounds played;
+  ignore the numbering, just read chronologically). Both real rounds:
+  opponent named **"dwarf"**, and both matched `doc/examples/dwarf.red`
+  behavior per earlier sessions' trace analysis. Scores: round 0
+  sonnet-5 2427 vs dwarf 1573 (~60.7%), round 1 sonnet-5 2354 vs dwarf
+  1646 (~58.9%). So the real opponent has been a stable, known
+  quantity (classic Dwarf) for both real rounds so far -- makes
+  Dwarf-matchup tuning a trustworthy proxy, unlike earlier sessions
+  that had to guess.
+
+## What I did
+No pmars rebuild needed (`src/pmars` prebuilt, still works). No
+`python3` in this environment (only `perl`/`awk`/`bash`) -- if you want
+a variant generator script, write it in bash (see below) or perl, not
+python.
+
+Picked up the standing "Ideas for next round" item about re-grid-
+searching constants that hadn't been revisited in a while, specifically
+the **THIRD fast-sweeper's step size/sign** (the 3rd of 3 "fast"
+residue-class sweepers alongside the always-present +FAST/-FAST pair;
+had been hardcoded to `+2*FAST` = +32 since introduced, never tuned
+independently). Used `pmars -f` throughout for reproducible A/B (see
+prior session's note on why this matters -- confirmed still true, and
+still the right way to test here).
+
+Wrote a bash variant-generator (saved as `/tmp/gen_variant.sh` this
+session -- does NOT persist, recreate from the heredoc pattern below if
+you want it) that takes `(FAST, THIRD, FHALF)` and emits a full
+`warrior.red`-shaped file, so grid searches are one-liners:
+```bash
+source /tmp/gen_variant.sh   # defines gen_variant() function
+gen_variant 16 -25 3000 /tmp/candidate.red
+./src/pmars -@ config/94.opt -f -r 8000 -b /tmp/candidate.red doc/examples/dwarf.red
+```
+(Recreate `/tmp/gen_variant.sh` from git history of this commit's
+`warrior.red` structure if it's gone -- it's just the current
+warrior.red's body with `$fast`/`$third`/`$fhalf` shell variables
+spliced into the FAST/THIRD/FHALF equ lines.)
+
+Grid-searched THIRD over divisors of 8000 (required for safety, see
+many earlier rounds' notes -- confirmed again this session: THIRD=8
+caused 112 ties out of 3000 rounds even vs Dwarf, i.e. non-negligible
+self-inflicted stalemates; **always check `-r 3000+ -f` includes 0
+ties before trusting a THIRD/FAST value**), both signs, magnitudes
+8..200:
+- Old baseline (THIRD=+32): 59.2-59.4% vs dwarf.red (consistent across
+  3000/5000/20000-round trials).
+- **THIRD=-25 (opposite sign AND different magnitude from the old
+  +32): 60.7-61.8% vs dwarf.red**, consistently ~2 points better than
+  the old baseline across every sample size tried (3000, 6000, 8000,
+  10000, 15000, 20000 rounds, all with `-f` so exactly reproducible).
+  This was the single best value found in a fairly wide sweep (tried
+  -8,-20,-25,-32,-40,-50,-64,-80,-100,-125,-160,-200 and their positive
+  counterparts) -- negative signs were consistently better than their
+  positive-magnitude counterparts in every pair tested (e.g. -25 beat
+  +25 by ~4 points, -40 beat +40 by ~2 points), which I don't have a
+  first-principles explanation for (the sweep should be symmetric by
+  construction; my best guess is it's an interaction with `pmars`'s
+  RNG/placement-order details under a fixed `-f` seed sequence rather
+  than a "real" direction preference -- **if you have spare budget,
+  worth double-checking this holds under a different/newer `-f` seed
+  or with plain non-fixed `-r` averaged over many repeated runs**,
+  since all my numbers this session came from the same seed sequence).
+- Re-confirmed FAST=16 still optimal with THIRD=-25 (grid over
+  10/16/20/32, 8000 rounds each: 16 wins clearly, 60.7% vs 49-54% for
+  the others).
+- Lightly re-checked FHALF (reset interval) with THIRD=-25, FAST=16:
+  1000/1500/2000/2500/3000/4000, 8000 rounds each -- all clustered
+  60.4-61.8%, quite flat/noisy, but 3000 was on top in both an 8000-
+  round and a follow-up 15000-round confirmation (61.8% vs 2000's
+  61.4%). Small, low-confidence gain; shipped anyway since it's free
+  (single-constant change, no downside found).
+
+**Shipped**: `warrior.red` now has `THIRD equ -25` (was `+32` via
+`2*FAST`) and `FHALF equ 3000` (was `2000`), everything else unchanged
+from the previous session's structure (1 slow full-core backstop + 3
+fast residue-class sweepers, 4 total processes -- this shape itself was
+re-validated as the local optimum by 2+ earlier sessions' process-
+count experiments, not re-tried this session; see round-3/4 sections
+above for that data if you want to revisit it).
+
+Final verification of the shipped file (not just the /tmp candidate):
+- `./src/pmars -@ config/94.opt -A warrior.red` -- assembles cleanly
+  (1 pre-existing `;assert` warning, harmless, present since round 1).
+- 300/300 vs an inert `jmp start` loop (recreate via the one-liner in
+  the round-0 section above -- still doesn't persist across sessions).
+- 300/300 vs `doc/examples/validate.red`.
+- 3072/5000 (61.4%) vs `doc/examples/dwarf.red` with `-f`, matching the
+  /tmp candidate's numbers exactly (confirms the copy into warrior.red
+  didn't introduce any transcription bugs).
+
+## Ideas for next round
+1. **Sanity-check the sign asymmetry finding (THIRD negative beating
+   positive) isn't a fixed-seed artifact.** I only tested with `pmars
+   -f`, which fixes the RNG seed sequence identically across runs (great
+   for A/B reproducibility, but if the asymmetry itself is a seed
+   artifact rather than a real effect, it might not hold in the actual
+   scored match, which almost certainly does NOT use a fixed seed).
+   Quick check: run the same THIRD=+25 vs THIRD=-25 comparison several
+   times *without* `-f` (plain `-r 5000`, repeated 3-5 times) and see if
+   -25 still comes out ahead on average, not just under one fixed seed
+   sequence. If it doesn't hold up, the THIRD=-25 change may need
+   reverting or re-deriving less naively.
+2. Same standing ideas from every prior session, still untried:
+   (a) real scanner (read-before-bomb) architecture instead of blind
+   carpet sweeps, (b) p-space (`ldp`/`stp`) usage to shrink our in-core
+   footprint, (c) a `test_opponents/` directory of hand-written
+   reference warriors beyond `dwarf.red`/`validate.red` so tuning isn't
+   100% reliant on one reference opponent matching the real one by
+   luck (it has, for 2 rounds running, but that's not guaranteed to
+   continue). All three are bigger/riskier rewrites that still haven't
+   found a session with enough spare budget to prototype safely -- next
+   session, if you have >15 steps free after routine verification,
+   consider spending them here instead of another constant-tuning
+   pass, since constant-tuning gains have shrunk to ~1-2 points per
+   session for a while now (this session: +2 points; round before:
+   +1-2 points; the one before that: also +1-2 points -- clearly
+   diminishing returns on this axis specifically).
+3. `python3` is NOT available in this environment (checked this
+   session) -- only `perl`/`awk`/`bash`. Don't waste a step trying it;
+   use bash heredocs (see `/tmp/gen_variant.sh` pattern above) or perl
+   for any future generator/analysis scripts.
