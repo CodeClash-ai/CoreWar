@@ -908,3 +908,164 @@ just not as lopsided a win as the ~70% we get vs `dwarf.red` locally.
    `imp.red` AND `validate.red`, all in `test_opponents/`+`doc/examples/`)
    before replacing the shipped `warrior.red`, given how much safe value
    is already banked.
+
+# Round update (sonnet-5, this session -- real trace root-cause + swarm2.red)
+
+## Context
+Real logs available: `/logs/rounds/0` and `/logs/rounds/1`, both vs
+opponent **smoothnoodlemap6**, both clean wins by score: round0
+sonnet-5 2577 vs 524, round1 sonnet-5 2567 vs 517 (~83% score share
+both times). `trace.md`/round1: 64 wins / 11 losses / 25 ties (100
+traces), opponent avg peak procs 63.4 (a wide spl-replicator), avg core
+owned only 7.7%, eliminated 64/100. `warrior.red` is UNCHANGED this
+session (see "What I did" below for why) -- still the same
+1-slow-sweep + 3-fast-sweep ("TwinSweep") design from prior sessions
+(HALF=7960, FAST=16, THIRD=-4, FHALF=3000), still verified safe/strong.
+
+## What I did
+1. **First real root-cause analysis of actual losses**, using the raw
+   `/logs/rounds/1/sim_*.jsonl` per-cycle traces directly (nobody had
+   done this before -- every prior session's notes only used the
+   aggregate `trace.md` summary or synthetic `dwarf.red`/`imp.red`
+   proxies). Format per line: `{"t":<cycle>,"c":[[addr,owner],...],
+   "p":[ip0,ip1],"n":[nprocs0,nprocs1],"d":[alive0,alive1]}` --
+   `p` is each warrior's *currently executing instruction address*
+   (not a data pointer!), `n` is live process count, `d` is final
+   alive/dead flags (only meaningful on last line before the
+   `{"winner":...}` line). `c` looks like a rolling window/history of
+   recently-touched core cells, not a literal process list -- didn't
+   fully pin down its exact semantics, but wasn't needed for the
+   analysis below.
+2. Grepped `p` at the second-to-last line of every one of the 11 real
+   losses. **9 of 11** showed the *opponent's* final IP sitting at a
+   near-constant address **7686-7690** regardless of where we (warrior
+   1) started (2515, 6468, 5465, 6267, 5076, 7662, 4680, 7124, ...) --
+   i.e. opponent loaded at offset 0, and this is offset **-310 to
+   -314** relative to their own start (just outside/before their own
+   ~100-instruction code block). Meanwhile *our* final IP in those
+   same losses always sat close to *our own* start offset (e.g. our
+   start 5076 -> final IP 5095; our start 6267 -> final IP 6286, etc.)
+   -- i.e. **our own main slow-sweep loop, still near where it started,
+   barely having made any progress into the core.**
+   **Interpretation**: the opponent is a replicator that spawns ~60
+   processes early (confirmed by `n` in the traces, matches trace.md's
+   62.2 avg peak procs), most of which die off in the ensuing chaos,
+   but it appears to keep (or end up with) one process sitting in a
+   defensive/stable loop just outside its own code -- a "guard" -- that
+   in these 11 loss cases is the one still alive at the end, while
+   *our* last-standing process (usually our un-spl'd main slow sweep,
+   since our 3 `spl`'d fast sweepers die off earlier in the chaos) gets
+   killed near its own home loop, evidently by early scattered bombing
+   from the opponent's swarm before it dies off, or by the guard itself
+   if within reach. **Net effect: our losses are mostly "our fast
+   sweepers get killed in the early chaotic phase, and then it comes
+   down to a coinflip-ish race between our un-spl'd slow sweep (which
+   hasn't traveled far yet) and their last survivor" rather than "we
+   get outright overwhelmed."** This matches losses happening across a
+   wide range of `t` (3588 to 33000+) rather than clustering early or
+   late.
+3. **Built `test_opponents/swarm2.red`**: an improved synthetic stand-in
+   based directly on this finding -- same spl-swarm as the older
+   `swarm.red`, PLUS a separate one-shot `spl`'d "guard" process that
+   sits in a small fixed-range bombing loop near its own start (mimics
+   the "guard survives at a near-constant offset" pattern found above).
+   **Important**: current `warrior.red` still beats `swarm2.red` 100%
+   (2000/2000, `-f`, 0 losses/ties) -- so this synthetic stand-in,
+   while structurally closer to the real trace pattern than plain
+   `swarm.red`, still doesn't reproduce the actual ~11% loss rate we
+   see for real. **It's a starting point, not a validated proxy yet**
+   -- treat any tuning conclusion drawn from it with real skepticism,
+   same caveat as `swarm.red` before it. A future session with more
+   budget could try tuning `swarm2.red`'s guard to be more aggressive/
+   better-placed until it actually reproduces a realistic loss rate
+   against our current warrior, THEN use it for real A/B tuning.
+4. Discovered a pmars CLI quirk while trying to use `-F <offset>` (used
+   successfully by an earlier session per older notes above): **`-F`
+   and `-f` cannot be combined in this pmars build** -- passing both
+   together silently falls through to the usage/help text (no error
+   message, just prints help and exits 0). Use ONE or the other:
+   `-F <offset>` alone (position fixed, RNG otherwise free) for
+   per-offset checks, or `-f` alone (RNG fixed, position free) for
+   general reproducible A/B. Also note `-F` wants a *space-separated*
+   token (`-F 2515`), not `-F2515` or `-F$2515` (both of those also
+   fall through to usage) -- the `-F $` in the `-help` text is just
+   describing the argument as a generic string placeholder, not a
+   literal `$` you need to type.
+5. Given the above, did NOT change `warrior.red` this session --
+   `swarm2.red` isn't yet a validated-enough proxy to safely tune
+   against (see caveat in #3), and I didn't have enough remaining
+   budget this session to also fix that AND validate a real structural
+   change. Prioritized landing the root-cause finding + a better (if
+   still imperfect) test tool for whoever picks this up next, per the
+   standing "if winning, testing/documentation may be high value"
+   guidance -- especially valuable this time since it's the *first*
+   session across many rounds of notes to actually look at real
+   per-cycle loss traces instead of only synthetic dwarf.red proxies.
+6. Also tried (documented as a *negative* result, do not retry as-is):
+   a "2 slow (opposite directions, half coverage each) + 2 fast" process
+   shape (replacing the 3rd fast sweeper with a second slow sweep) to
+   see if halving the slow sweep's time-to-reach-far-cells would help
+   with the close/attrition-race loss pattern found above. **First
+   attempt had a self-destruct bug**: placed the new backward slow
+   sweep's pointer cell at the wrong end of the instruction block
+   (bottom, when a *backward*-stepping pointer must sit at the very
+   TOP of the block per the long-standing front/back convention --
+   see round-0 notes) -- caused 243/300 ties/self-kills even vs a
+   totally passive inert loop opponent. Fixed the placement (moved it
+   to the top, alongside the other backward-stepping pointer), which
+   resolved the self-destruct, but the resulting shape still tested
+   clearly WORSE than the current shipped 1-slow+3-fast design vs
+   `doc/examples/dwarf.red` (1536/3000 = 51.2% vs the current ~70.6%).
+   **Do not retry "2 slow + 2 fast" as a replacement for "1 slow + 3
+   fast"** -- the 3rd fast residue-class sweeper is carrying real
+   weight against dwarf-shaped opponents that a 2nd slow sweep doesn't
+   replace. (Generator script used: `/tmp/gen_2slow2fast.sh FAST FHALF
+   outfile` -- does not persist, recreate from this note's description
+   if wanted; the key gotcha to preserve is the front/back pointer
+   placement convention.)
+
+## Ideas for next round
+1. **Highest priority**: improve `swarm2.red` (or build a `swarm3.red`)
+   until it actually reproduces something closer to the real ~11%
+   loss / 25% tie rate against current `warrior.red`, then use it (not
+   `dwarf.red`) as the primary tuning target -- since we now have good
+   evidence (this session, see "What I did" #2) that the real
+   opponent's shape (wide swarm + a lone late-game guard) is quite
+   different from `dwarf.red`'s shape (single static bomber), and all
+   of this repo's historical constant-tuning (FAST/THIRD/FHALF/process
+   count) was done exclusively against `dwarf.red`. It's possible
+   there's a different local optimum for the real opponent's shape
+   that nobody has looked for yet, BUT don't just blindly re-tune
+   against an unvalidated synthetic proxy -- confirm the proxy's loss
+   rate against our current warrior is in a similar ballpark to the
+   real ~11-25% first, or the tuning conclusions won't transfer.
+2. The concrete failure mode found this session ("our 3 spl'd fast
+   sweepers die off early in the chaotic swarm phase, then our lone
+   un-spl'd slow sweep -- still near its own start -- loses a race/
+   coinflip against the opponent's last survivor") suggests two
+   possible structural fixes worth prototyping (both untried):
+   (a) Make the fast sweepers *harder to kill early* -- e.g. spread
+   their home loop code further from each other and from the main
+   slow sweep's home loop, instead of all 4 processes' code living in
+   one contiguous ~40-cell block, so a lucky early scattershot from
+   the swarm's chaotic bombing phase is less likely to clip more than
+   one of them at once.
+   (b) Give the slow sweep a head start / higher priority early on
+   (e.g. reorder so the slow sweep's `add`+`mov` runs before the 3
+   `spl`s, or split it into 2 half-coverage sweeps -- NOT the "2 slow +
+   2 fast, drop a fast" shape already tried and found worse this
+   session, but potentially "1 slow forward (full coverage, unchanged)
+   + 3 fast, but ALSO give the main process's very first few iterations
+   priority/a bigger initial step" or similar) so that by the time the
+   chaotic early phase resolves down to 1-vs-1, our slow sweep has
+   already covered more ground instead of still sitting near its own
+   start.
+3. Standing ideas from every prior session, still untried: real scanner
+   (read-before-bomb) architecture; p-space (`ldp`/`stp`) to shrink our
+   in-core footprint (which per idea #2(a) above might now matter more
+   than previously thought, given the "early clip kills a spl'd
+   process" failure mode found this session).
+4. Remember `-F` and `-f` cannot be combined in this pmars build (see
+   "What I did" #4) -- use one or the other, not both, or you'll
+   silently get a no-op (prints usage, exits 0, easy to miss in a
+   script that doesn't check the `Results:` line is actually present).
