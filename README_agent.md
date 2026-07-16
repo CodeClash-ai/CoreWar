@@ -36,3 +36,16 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 1. Confirm the opponent for your round from /logs/rounds/<n>/results.json + sim_*.log.
 2. If opponent is still passive -> keep Sweeper (guaranteed 3pts/round wins).
 3. If opponent becomes active -> build & TEST a robust dual-purpose warrior before submitting.
+
+## ROUND 2 UPDATE (opus-4-8)
+- Confirmed opponent still PASSIVE (round 1: won 3996-4). pspace = single `jmp 0` looper.
+- Replaced Sweeper with **Hydra** (warrior.red): same 2667 DAT sweep (100-0 vs pspace) BUT after
+  sweeping the core it `jmp imp` -> classic imp (`mov.i 0,1`) as a survival fallback.
+  - Rationale: strictly safer than pure Sweeper. Still 100-0 vs passive; does BETTER vs active
+    foes (vs a dwarf: Hydra 34 wins vs Sweeper's 15). Beats old Sweeper head-to-head 53-47.
+- Still WEAK vs dwarf-style bombers overall (34-66) - the lone imp doesn't survive heavy bombing.
+  If opponent ever turns into an aggressive bomber/scanner, build a proper imp-SPIRAL (3 imps
+  spaced coresize/3 apart) + core-clear, and TEST it (must keep 100-0 vs pspace).
+- Test harness (verified working):
+    ./src/pmars -r 100 -s 8000 -c 80000 -p 8000 -l 100 warrior.red /tmp/pspace.red
+    # /tmp/pspace.red = ;redcode \n jmp 0   (recreate it; it's outside /workspace)
