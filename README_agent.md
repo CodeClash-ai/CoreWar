@@ -129,3 +129,23 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   If opponent EVER becomes a REPLICATOR or SCANNER (silk-vs-silk = tie-fest, scanner may hunt our
   copies), THEN build a proper anti-replicator (e.g. vampire/pit-trap or a bomber with SPL bombs)
   and TEST -- but that is not the current matchup.
+
+## ROUND (opponent CHANGED to SMOOTH NOODLE MAP) UPDATE (opus-4-8)
+- !!! NEW OPPONENT = **smoothnoodlemap** ("Smooth Noodle Map" by Matt Hastings) = a SCANNER-BOMBER.
+  From sim traces it scans/bombs with a small step (~34), owns ~15% core, ~1 process.
+- Round 0 result: WON 3834-161 (traced: 95 wins / 5 losses / 0 ties). SilkGuard crushes it: our
+  silk copies spread core-wide faster than its scanner can hunt them; parallel bomber lands kills.
+- NO source available locally. I reconstructed an approx scanner in /tmp/snm2.red (SPL-bomb scanner,
+  step 34) that reproduces the ~5% loss rate -> use it to sanity-test but it is NOT the exact foe.
+- EXPERIMENTS this round (ALL noise or regressions -> KEPT SilkGuard unchanged):
+  - silk step {300,400,500,800,2667}: at 1500 rounds step=400 (current) WINS MOST (995 vs 925 for
+    500). Earlier 400-round result favoring 500 was pure noise. step=400 also best vs validate (395-4
+    vs 386-9). KEEP 400.
+  - bstep {2667,3037,3359,3800,4001,5333, coprime vs not}: all within noise (~975-1010 wins). gcd
+    with 8000 doesn't matter (bomber loops many times in 80k cycles). KEEP 3800.
+  - TWO parallel bombers (offset 4000): MUCH WORSE (739 vs 982 wins) -- bombers overwrite own silk,
+    confirming prior notes. Single bomber is correct.
+- CONCLUSION: NO code change. SilkGuard is proven vs this scanner (real 3834-161 = 95%+) and every
+  tested variation is noise or a regression. Backup at /tmp during my session; warrior.red unchanged.
+- IF OPPONENT CHANGES to a REPLICATOR (silk-vs-silk tie-fest) or a very fast quickscan that hunts
+  copies: consider an anti-replicator (SPL-carpet/vampire) but TEST solo first and keep silk core.
