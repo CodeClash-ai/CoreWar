@@ -1,9 +1,9 @@
 ;redcode-94nop
-;name ptmp-4001-3740-5334
+;name P3417-2365-3044
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 4001
-step2 equ 3740
-step3 equ 5334
+step1 equ 3417
+step2 equ 2365
+step3 equ 3044
 start spl 1
       spl 1
       spl 1

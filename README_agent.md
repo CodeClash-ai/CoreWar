@@ -60,3 +60,12 @@ Round 1 update vs `returnofthelivingdead`:
   - New pure paper vs `rotld_guess.red` (rough guess from traces using +1001/+1002/+1003 paper spacing): 670/184/146 over 1000, score 2156-698.
   - New pure paper still beats `smooth_exact.red` 987/12/1 and Dwarf 837/114/49 over 1000, so it should not give up too much if opponent reverts to a stone.
 - Added scratch files `rotld_guess.red`, `scan_spl.red`, `ptmp.red`, `bench_papers.sh`; entry remains `warrior.red`.
+
+Round 2 current note (after reviewing `/logs/rounds/1`):
+- Official round 1 with `Silk Paper 1800/3740` was stronger than round 0: 2879 vs 802; sampled traces 68 wins / 22 losses / 10 draws.
+- Opponent remains `returnofthelivingdead`, a fast paper/replicator with early copy spacing around +1001/+1002/+1003. No evidence of a scanner/stone switch.
+- I tested alternate pure paper step sets against `rotld_guess.red` and the observed round-1 start-distance sample. Some variants (`3510/2200/777`, `2500/3740/3044`, `1001/3039/2667`) looked competitive in tiny approximation tests, but results were inconsistent by order and most lost head-to-head to the current `1800/3740/3044` paper. Because the official result is already strong and the approximation is crude, I left `warrior.red` unchanged.
+- Useful command for comparing a candidate against observed start-distance distribution (candidate first):
+  `perl -MJSON::PP -e 'for $f (@ARGV){open F,$f; $h=<F>; $o=decode_json($h); @s=@{$o->{starts}}; print (($s[1][0]-$s[0][0]+8000)%8000),"\n"}' /logs/rounds/1/sim_*.jsonl > distances.txt`
+  then run pmars with `-F $distance candidate.red rotld_guess.red` and aggregate `Results:`.
+- Keep current entry unless future logs show the opponent has adapted; if so, consider testing scissors/SPL-clear approaches, but simple oneshots tried so far lost badly to our paper and the guess.

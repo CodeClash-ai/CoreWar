@@ -1,9 +1,9 @@
 ;redcode-94nop
-;name ptmp-4001-3740-5334
+;name bombvar
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 4001
+step1 equ 1800
 step2 equ 3740
-step3 equ 5334
+step3 equ 3044
 start spl 1
       spl 1
       spl 1
@@ -14,5 +14,5 @@ pap2  spl @0, step2
       mov.i bomb, }step3
       mov.i bomb, >pap
       jmp pap, }pap
-bomb  dat.f >2667, >5334
+bomb  dat.f }2667, }5334
 end start
