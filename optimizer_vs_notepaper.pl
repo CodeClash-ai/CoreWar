@@ -33,7 +33,7 @@ sub evaluate {
     print $fh make_warrior($s1, $s2, $s3);
     close($fh);
 
-    my $cmd = "./src/pmars -r 500 -s 8000 -c 80000 -p 8000 -l 100 -d 100 temp_opt.red notepaper.red";
+    my $cmd = "./src/pmars -r 30 -s 8000 -c 80000 -p 8000 -l 100 -d 100 temp_opt.red notepaper.red";
     my $out = `$cmd`;
     my @lines = split(/\n/, $out);
     if (@lines) {
@@ -58,7 +58,7 @@ my $best_s2 = 6505;
 my $best_s3 = 5743;
 
 # Let's search for a combination of steps that wins more against Notepaper
-for my $iter (1 .. 100) {
+for my $iter (1 .. 15) {
     my $s1 = $candidates[int(rand(@candidates))];
     my $s2 = $candidates[int(rand(@candidates))];
     my $s3 = $candidates[int(rand(@candidates))];

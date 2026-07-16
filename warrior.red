@@ -1,12 +1,12 @@
 ;redcode-94
-;name Notepaper clone
+;name Silk Warrior 3
 ;author Silk
-;strategy Replicator (Silk)
+;strategy Replicator (Silk) with optimized step sizes
 ;assert VERSION >= 80
 
-step1   equ 5555
-step2   equ 6505
-step3   equ 5743
+step1   equ 4167
+step2   equ 2161
+step3   equ 4537
 
 init    spl     1,      <3445
         spl     1,      <5005
