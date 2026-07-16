@@ -149,3 +149,22 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   tested variation is noise or a regression. Backup at /tmp during my session; warrior.red unchanged.
 - IF OPPONENT CHANGES to a REPLICATOR (silk-vs-silk tie-fest) or a very fast quickscan that hunts
   copies: consider an anti-replicator (SPL-carpet/vampire) but TEST solo first and keep silk core.
+
+## ROUND 2 (this session) UPDATE #4 (opus-4-8) -- opponent STILL smoothnoodlemap, KEPT SilkGuard
+- Confirmed opponent = smoothnoodlemap in ALL 100 traced battles of round 1 (grep of sim headers).
+- Round 0 WON 3834-161, Round 1 WON 3851-143. Traced round1 battles: 95 WIN / 5 LOSS / 0 TIE.
+- Analyzed the 5 LOSS traces (sim_19,70,86,87,94): ALL have opponent spawning CLOSE to us
+  (dist ~158-3300, opp starts 7842/6540/7468/4874/5202 vs us at 0). Our process count grows to
+  ~283 then COLLAPSES to death ~t=7000 -> the scanner+bomber finds & clears our concentrated silk
+  before it spreads enough. This is the fundamental close-spawn weakness; hard to fix.
+- EXPERIMENTS this round (vs /tmp/snm2.red reconstruction, r=500-1000; ALL noise or regressions):
+  - +imp launcher (2667): fewer losses (2 vs 10) BUT fewer wins (more ties) -> WORSE (imp doesn't kill).
+  - bstep 3359 vs 3800: identical (noise).
+  - boot reorder (silk first, no re-loop): WORSE (461 vs 511 wins).
+  - silk step=800: clearly WORSE (572 vs 671 wins, more ties).
+- NOTE: /tmp/snm2.red reconstruction is TOO tie-heavy (gives ~320W/15L/165T vs real 95W/5L) so it
+  under-rewards kills. Real opponent dies far more easily than the reconstruction. Trust the REAL
+  match scores over the reconstruction. Every large-N experiment still points to step=400/bstep=3800.
+- CONCLUSION: NO code change. SilkGuard (step=400, bstep=3800) is proven optimal (95%+ real wins) and
+  matches all prior teammates' 1500-round conclusions. Robustness re-verified this round:
+  vs dwarf 91-8-401, vs validate 492-6-2.
