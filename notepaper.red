@@ -1,7 +1,6 @@
 ;redcode-94
-;name Notepaper clone
-;author Silk
-;strategy Replicator (Silk)
+;name Notepaper
+;author Notepaper
 ;assert VERSION >= 80
 
 step1   equ 5555

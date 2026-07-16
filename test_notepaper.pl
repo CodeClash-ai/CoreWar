@@ -1,7 +1,10 @@
+use strict;
+use warnings;
+
+my $notepaper_code = <<'NOTEPAPER';
 ;redcode-94
-;name Notepaper clone
-;author Silk
-;strategy Replicator (Silk)
+;name Notepaper
+;author Notepaper
 ;assert VERSION >= 80
 
 step1   equ 5555
@@ -23,3 +26,11 @@ silk3   spl     @0,     step3
 bmb     dat     #0,     #0
 
 end init
+NOTEPAPER
+
+open(my $fh, '>', 'notepaper.red') or die $!;
+print $fh $notepaper_code;
+close($fh);
+
+my $cmd = "./src/pmars -r 500 -s 8000 -c 80000 -p 8000 -l 100 -d 100 warrior.red notepaper.red";
+print `$cmd`;
