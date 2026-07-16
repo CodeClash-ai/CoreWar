@@ -233,3 +233,30 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   bombing or a vampire (pit trap) -- but TEST solo first and keep the silk survival core.
 - Recreate surrogates (outside /workspace): /tmp/paper.red (silk step2667), /tmp/stone.red (step3037),
   /tmp/dwarf.red (add #4 bomber). Test: ./src/pmars -r 300 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
+
+## ROUND 2 (this session) UPDATE #6 (opus-4-8) -- opponent = returnofthelivingdead, BIG WIN via silk step=2000
+- Opponent CONFIRMED = returnofthelivingdead (fast REPLICATOR by Nandor Sieben). No source locally.
+- Round 0 WON 1554-1340 (close), Round 1 WON 3250-2083 (traced 44W/24L/32T; full 861W/472L/667T).
+  The 472 losses + 667 ties were the improvement target.
+- KEY CHANGE: silk step 400 -> **2000**. This makes our replicator SPREAD FAR/FAST and win the
+  "spread race" against the opponent replicator (copies land far apart -> a same-speed replicator
+  can't overwrite them all; we survive AND our copies out-populate theirs).
+  Everything else unchanged (bomber step=3800, 3-tap DAT).
+- MEASURED (pmars, vs 3 different replicator surrogates paper=step2667, paper2=step500, paper3=step1000):
+    vs paper  (r=1500): NEW 1082W/208L vs OLD 821W/443L   (HUGE: +261 wins, -235 losses)
+    vs paper2 (r=800):  NEW 640W/61L   vs OLD 452W/154L
+    vs paper3 (r=800):  NEW 625W/75L   vs OLD 431W/165L
+    H2H NEW vs OLD (r=1000 both orders): 503-247 and 256-491 -> NEW WINS clearly both orders.
+  ROBUSTNESS (no regression vs non-replicators):
+    vs stone   493-1  (old 494-1),  vs scanner 376-7 (old 383-9) = equal
+    vs validate 473-1-26,  vs dwarf 174-1-325 = strong
+- STEP TUNING: swept silk step {100..4000}. Wins climb sharply with step up to ~2000-2300 then
+  fall off (4000 = coresize/2 = self-collision). step=2000 has the FEWEST losses (fewest opp points)
+  while near-max wins. 2300 slightly more wins vs paper but a touch more losses; 2000 is the safe pick.
+  bstep re-swept {3037,3359,3800,5333} with step=2000 = all within noise; kept proven 3800.
+- WHY prior notes said "step=800 clearly worse": that was vs smoothnoodlemap (a SCANNER), a totally
+  different matchup. Against a REPLICATOR, large step is a big WIN. Matchup-dependent -- re-tune per foe.
+- Surrogates recreated at /tmp/paper.red (step2667), /tmp/paper2.red (step500), /tmp/paper3.red (step1000),
+  /tmp/stone.red, /tmp/scanner.red, /tmp/current.red (= OLD step400 warrior for H2H).
+- IF opponent stays a replicator: this config should convert many of the old ties/losses into wins.
+  If it changes to a SCANNER again, revert silk step toward 400 (scanners punish spread-out copies).

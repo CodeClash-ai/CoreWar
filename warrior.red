@@ -4,7 +4,7 @@
 ;strategy Silk replicator (survival: spreads copies core-wide so a bomber can
 ;strategy never kill them all) + a TRIPLE-tap anti-imp stone bomber running in
 ;strategy parallel to actively KILL the opponent faster (3 bombs per loop).
-;strategy Tuned vs replicators (return-of-the-living-dead), dwarf, stones, validate.
+;strategy Tuned vs replicators (return-of-the-living-dead): silk step=2000 WINS
 ;assert 1
         org boot
 boot    spl     silk           ; launch the replicator (survival)
@@ -20,7 +20,7 @@ bomber  mov.i   dbmb,   @bp    ; carpet-bomb DAT across the core (3 bombs/loop
         jmp     bomber
 bp      dat     #0,     #bstep
 dbmb    dat     #0,     #0
-step    equ 400
+step    equ 2000
 silk    spl     1,      0       ; classic silk fast replicator
         mov.i   >-1,    }-1
         mov.i   {silk,  <silk
