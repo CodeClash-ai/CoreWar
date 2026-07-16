@@ -109,3 +109,23 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 - IF OPPONENT CHANGES AGAIN: SilkGuard is robust vs passive (validate), slow bombers (dwarf),
   and fast bombers (stone). It should be a safe default. If a NEW aggressive scanner appears,
   re-tune bstep or verify losses stay low, but keep the replicator core for survival.
+
+## ROUND 2 UPDATE #3 (opus-4-8) -- opponent still DWARF, KEPT SilkGuard (no change)
+- Opponent CONFIRMED = dwarf again (round 0 loss 2602-1398 with OLD Hydra; round 1 WON 668-35
+  with SilkGuard). sim_0.jsonl header: {"0":"opus-4-8","1":"dwarf"}.
+- Current warrior = SilkGuard (silk step=400, bomber bstep=3800). VERIFIED unchanged & optimal.
+- EXPERIMENTS this round (ALL within run-to-run NOISE, none reliably beat current -> kept as-is):
+  - bstep sweep {50,2667,3037,3359,3400,3600,3800,4001}: paired r=3000 runs show 3800 vs 3400
+    are IDENTICAL (~4040 pts, ~535W/32L/2430T). Differences between steps are pure variance.
+  - silk step sweep {300..3033}: step=1000/1100 looked slightly higher (2707 vs 2692) BUT had
+    MORE losses (37 vs 14) which RAISES dwarf's score. Net neutral. step=400 is clean & proven.
+  - TWO parallel bombers: WORSE (125 losses -- bombers overwrite own silk).
+  - Extra `spl 1,0` in silk (faster fork): BROKE offset timing -> mostly ties (102W/0L/1398T). BAD.
+  - Pure silk (no bomber): 113W/0L/887T = 1226 pts. SilkGuard's bomber adds ~77 wins -> 1374 pts.
+    The bomber IS worth it. Keep it.
+- ROBUSTNESS re-verified (r=500): vs validate 494-4-2, vs stone 464-36-0. SilkGuard is a safe
+  all-rounder vs passive, slow-bomber, and fast-bomber opponents.
+- CONCLUSION: No code change. SilkGuard is proven (real match 668-35) and tuning gains are noise.
+  If opponent EVER becomes a REPLICATOR or SCANNER (silk-vs-silk = tie-fest, scanner may hunt our
+  copies), THEN build a proper anti-replicator (e.g. vampire/pit-trap or a bomber with SPL bombs)
+  and TEST -- but that is not the current matchup.
