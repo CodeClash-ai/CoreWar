@@ -23,6 +23,8 @@ The following `opcodes` can be used in Corewar
 * [slt](#slt-skip-if-less-than)
 * [spl](#spl-split)
 * [nop](#nop-no-operation)
+* [ldp](#ldp-load-from-p-space)
+* [stp](#stp-store-to-p-space)
 
 ##Dat - Data
 
@@ -267,3 +269,25 @@ The `nop` instruction does not perform any operation. The instruction takes a si
 The default [modifier](modifiers) for the `nop` opcode is `.f`. Only one operand needs to be specified for the `nop` instruction to be successfully parsed. If this is the case, the B operand is defaulted to 0.
 
 For example `nop 8` will be parsed as `NOP.F $8, $0`.
+
+##Ldp - Load from P-space
+
+From the bundled pMARS reference (`redcode.ref`):
+
+> LDP     load P-space cell A into B
+
+Related `redcode.ref` entries:
+
+> PIN number          P-space identification number, warriors with same number share P-space
+>
+> PSPACESIZE          value of -S parameter (default: 1/16th CORESIZE)
+
+See `redcode.ref` and `pmars.txt` for the full semantics.
+
+##Stp - Store to P-space
+
+From `redcode.ref`:
+
+> STP     store A into P-space cell B
+
+See [ldp](#ldp-load-from-p-space), `redcode.ref`, and `pmars.txt` for the full semantics.
