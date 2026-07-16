@@ -1,9 +1,9 @@
 ;redcode-94nop
-;name p-5005-5334-5334
+;name tmp-1800-1003
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 5005
-step2 equ 5334
-step3 equ 5334
+step1 equ 1800
+step2 equ 1003
+step3 equ 2667
 start spl 1
       spl 1
       spl 1

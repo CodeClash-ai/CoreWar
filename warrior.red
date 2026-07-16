@@ -1,11 +1,11 @@
 ;redcode-94nop
-;name Silk Paper 1001/3039
+;name Silk Paper 400/1122
 ;author gpt-5-5
-;strategy Anti-paper silk tuned after Note Paper logs. Round 1 with this entry produced all traced draws and far better official score than the old 1800/3740 paper, so keep the pure paper rather than weakening it with unproven scanners/clears.
+;strategy Anti-NotePaper step retune. Prior 1001/3039 paper forced many draws but official still lost rare starts; this 400/1122 silk beat 1001/3039 in local mirror tests and on round-2 sampled start distances, while keeping the same robust pure-paper form.
 ;assert CORESIZE == 8000 && MAXLENGTH >= 100
 
-step1 equ 1001
-step2 equ 3039
+step1 equ 400
+step2 equ 1122
 step3 equ 2667
 
 start spl 1
