@@ -1,28 +1,34 @@
 # Agent notes for CoreWar bot
 
-Current `warrior.red` is **Linear Exterminator**, a small linear `jmz.f` scanner specialized against the observed opponent, `P-space demo`.
+Current `warrior.red` is **Linear Exterminator**, a compact linear `jmz.f` scanner.
+It is intentionally simple and currently scores perfectly against the observed opponent.
 
-Round history:
+## Observed round history
 
-- Round 0: both warriors were the bundled P-space demo and all games tied.
-- Round 1: Linear Exterminator scored a clean sweep. `/logs/rounds/1/results.json` reports winner `gpt-5-5` with score 4000-0, and the 100 saved traces all show `gpt-5-5` winning with zero ties/losses. The opponent was still `P-space demo by Stefan`.
+Available logs at this handoff:
 
-How the bot works:
+- `/logs/rounds/0/results.json`: `gpt-5-5` beat `validate` 4000-0. Saved trace/log sample names the opponent as `Validate 1.1R by Stefan Strack`.
+- No later `/logs/rounds/*` results were present when this note was written.
 
-- Scans core one cell at a time from offset 100 using `jmz.f` so it cannot skip the stationary opponent.
-- When it finds non-empty code, backs up 15 cells and overwrites 35 cells with `DAT 0,0`.
-- Then resumes scanning in case any enemy processes/code remain.
-
-Validation commands used locally:
+Local validation this round:
 
 ```sh
-./src/pmars -@ config/94nop.opt -b -r 100 warrior.red /tmp/opp.red
-./src/pmars -@ config/94nop.opt -b -r 100 /tmp/opp.red warrior.red
+./src/pmars -@ config/94nop.opt -b -r 200 warrior.red doc/examples/validate.red
+./src/pmars -@ config/94nop.opt -b -r 200 doc/examples/validate.red warrior.red
 ```
 
-where `/tmp/opp.red` is the reconstructed bundled P-space demo from the round-0/round-1 logs. Both commands give 100 wins / 0 losses / 0 ties for our bot.
+Both commands produced 200/200 wins for our warrior (no losses or ties), independent of warrior order.
 
-Round-2 recommendation:
+## How the bot works
 
-- Since round 1 was already a perfect sweep and logs show no opponent change, I left `warrior.red` unchanged for round 2. Changing to a faster blind carpet bomber also sweeps P-space demo, but it tested slightly worse against our current scanner and gives no score benefit if all games are already wins.
-- If future logs show the opponent changed to an active bomber/replicator, this bot is not a general hill warrior; consider replacing it with a more robust stone/paper/scanner or a p-space strategy selector.
+- Scans core one cell at a time from offset 100 using `jmz.f` so it does not skip stationary code.
+- When it finds a non-empty instruction, it backs up 15 cells and overwrites 35 consecutive cells with `DAT 0,0`.
+- Then it resumes scanning in case the enemy has surviving processes/code.
+
+This is well-suited to the bundled `Validate 1.1R` opponent, which is stationary and long enough that the 35-cell wipe after a hit reliably kills it.
+
+## Recommendation for next teammate
+
+If the opponent remains `Validate 1.1R`, keep `warrior.red` unchanged: it already gives the maximum possible match result in local tests and in the available logs.
+
+If future logs show a different active opponent (bomber/stone/paper/replicator), this warrior is not a general-purpose hill warrior. Consider replacing it with a more robust stone/paper/scanner or a p-space strategy selector, and test against reconstructed opponents from the saved `sim_*.jsonl` traces.
