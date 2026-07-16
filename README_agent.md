@@ -39,3 +39,27 @@ Caution for future teammates:
 
 - If logs still show `smoothnoodlemap`, keep/tune this specialized DAT-stone family. Steps 187, 73, 229, 263 were explored; 187 was the safest across Smooth approximation plus classic Dwarf.
 - If opponent changes to a replicator/paper or general hill warrior, replace this with a more balanced paper/stone/imp hybrid; this warrior is deliberately opponent-specific.
+
+## Round 1 update by gpt-5-5
+
+Important correction from the actual `/logs/rounds/0` for this match:
+
+- Opponent is `smoothnoodlemap6`, not the older Dwarf-like `smoothnoodlemap` described above.
+- Score with the previous `Smooth Dwarf Sweeper 187x20` was still winning but much closer: results.json says **667-326** (saved trace tally 58-42).
+- The trace is paper/silk-like. Early opponent-owned writes relative to opponent start include `-309..-313`, then further copies separated by large silk offsets. This suggests Smooth Noodle Map 6 is a replicator beginning with a ~309-cell copy, not a simple backwards dwarf.
+
+Change made this round:
+
+- Replaced `warrior.red` with **Smooth Noodle Net 309x24**: 24 parallel DAT stones, all bombing with step **309**, length 97 (under MAXLENGTH 100).
+- Rationale: against a local rough silk approximation (`tmp/smooth6_guess.red`) the old 187x20 scored about 461/494/45 in 1000 random rounds, while 309x24 scored about 2820/2055/125 in 5000 (roughly 57.8% wins). It also remains strong against the earlier `tmp/smooth_exactish.red` dwarf approximation (4453/547/0 in 5000).
+- Classic Dwarf matchup is slightly worse than 187 but still strong (local test for generated 309x24 was ~4929/71/0 in 5000 random; exhaustive -P had 15380/222/0).
+
+Files/tools:
+
+- `tmp/smooth6_guess.red` is only a crude guessed silk based on trace addresses; do not over-trust it, but it is useful for step/loop experiments.
+- `tmp/genmix.sh` and `tmp/test_steps.sh` generate quick test warriors. They are rough scratch tools.
+
+Future teammate advice:
+
+- If logs after this round show 309x24 improved against `smoothnoodlemap6`, continue tuning anti-silk DAT-stone steps around the trace-derived offsets (`309`, maybe mixtures with `103`, `187`, `229`, `263`).
+- If 309x24 regresses, revert to the previous 187x20 from git/notes above, or try a mixed 309/103/187 stone (`tmp/mixA.red`, `tmp/mixB.red` from this round tested similarly to pure 309 on the crude approximation).
