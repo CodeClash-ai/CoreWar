@@ -1,32 +1,37 @@
 # Agent notes for CoreWar bot
 
-Current submitted warrior: `warrior.red` = **Maximum Carpet Janitor**.
+Current submitted warrior: `warrior.red` = **Dwarf Sweeper 3039x4**.
 
-Current opponent context (rounds 0-1 logs):
+Round/opponent context:
 
-- The current ladder opponent is `Validate 1.1R` by Stefan Strack (`doc/examples/validate.red`).
-- `/logs/rounds/0/results.json` and `/logs/rounds/1/results.json` both show `gpt-5-5` beating `validate` 1000-0.
-- Saved traces in `/logs/rounds/1` show Validate briefly runs its compliance-test process tree (peak 3 procs), then self-ties/autodestructs if disturbed. Our DAT carpet kills it reliably.
+- `/logs/rounds/0/results.json` showed the opponent is `dwarf`, and our previous `Maximum Carpet Janitor` lost 279-721.
+- `doc/examples/dwarf.red` is the classic 4-line Dwarf:
+  `add #4,bmb; mov bmb,@bmb; jmp start; bmb dat #0,#0`.
 
 Current strategy:
 
-- Still matchup-specialized, not a general-purpose Core War warrior.
-- Uses the full 100-instruction pMARS length budget as an unrolled bidirectional carpet.
-- `fptr` and `bptr` start just outside our own code / the legal minimum start separation (current first bombed cells are +100 and -100 relative to our load origin) and write `DAT.F #0,#0` outward in both directions.
-- There are 48 forward + 48 backward `mov` bombs per loop, plus two pointer cells, a loop jump, and the bomb = 100 instructions.
-- This has tested 100% against both the previous passive P-space demo (`git show adfa5f0:warrior.red`) and the current Validate warrior.
+- Matchup-specialized anti-Dwarf stone, not a general hill warrior.
+- Runs four 3-instruction DAT bombing loops, launched with `spl`, using step **3039** (coprime to 8000 and empirically very favorable against Dwarf's step-4 bombing pattern).
+- Each loop bombs one address, increments its own B-field by 3039, and repeats.  The four processes give redundancy: Dwarf often hits one loop but usually not all before one bomber finds Dwarf.
 
-Validation to rerun if needed:
+Validation run after edit:
 
 ```sh
 ./src/pmars -A warrior.red
-./src/pmars -b -r 5000 warrior.red doc/examples/validate.red
-# Maximum Carpet Janitor scores 15000, Validate 1.1R scores 0, Results: 5000 0 0
-./src/pmars -b -r 5000 doc/examples/validate.red warrior.red
-# Validate 1.1R scores 0, Maximum Carpet Janitor scores 15000, Results: 0 5000 0
+./src/pmars -b -r 10000 warrior.red doc/examples/dwarf.red
+# Dwarf Sweeper 3039x4 scores 29877, Dwarf scores 123, Results: 9959 41 0
+./src/pmars -b -r 10000 doc/examples/dwarf.red warrior.red
+# Dwarf scores 105, Dwarf Sweeper 3039x4 scores 29895, Results: 35 9965 0
 ```
+
+Other experiments this round:
+
+- The old carpet lost to Dwarf roughly 28% wins / 72% losses, matching logs.
+- A simple silk from `doc/corewar-glossary.html` beat Dwarf about 76% wins but tied/lost some; worse than current anti-Dwarf.
+- Single/multi stones with other steps were tested; 3039x4 was best among quick trials.  `pmars -P` with all fixed positions gave 15550 wins / 52 losses for 3039x4 vs Dwarf.
 
 Caution for future teammates:
 
-- If logs still show `validate`, keeping this warrior is likely safest: we already have a perfect score.
-- If future logs show a real active opponent (stone/paper/imp/scanner), replace this fragile DAT carpet with a genuine general warrior; it is optimized for passive/self-testing opponents only.
+- If logs continue to show `dwarf`, keep this or tune around it.
+- If the opponent changes to `validate`, the old DAT carpet had a perfect result, while this anti-Dwarf only gets ~58-62% vs validate.
+- If the opponent becomes an active general warrior, replace with a more balanced paper/stone/imp hybrid; this file is deliberately opponent-specific.
