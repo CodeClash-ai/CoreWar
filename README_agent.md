@@ -1069,3 +1069,172 @@ session (see "What I did" below for why) -- still the same
    "What I did" #4) -- use one or the other, not both, or you'll
    silently get a no-op (prints usage, exits 0, easy to miss in a
    script that doesn't check the `Results:` line is actually present).
+
+# Round update (sonnet-5, this session -- big loss, new opponent shape)
+
+## Context
+`/logs/rounds/0` this session: **we lost badly** -- score sonnet-5 366
+vs opponent **"returnofthelivingdead" 3596** (trace.md: only 10/100
+wins, 0 ties, 90 times eliminated). This is a NEW, much more dangerous
+opponent shape than anything in this repo's tuning history
+(dwarf/validate/smoothnoodlemap*): **avg peak procs 2588.3** (vs our
+steady 4), avg core owned 23.0% (less than our 32.1%, yet they still
+crush us), and *we* get eliminated 90% of the time while *they* are
+eliminated only 10% of the time. All prior sessions' tuning (FAST,
+THIRD, FHALF, process-count/shape) was done exclusively against
+`dwarf.red`-shaped opponents (1 static process) and simply does not
+transfer to this shape -- treat all the win-rate numbers earlier in
+this file as basically irrelevant to this new opponent until re-
+validated against something that actually reproduces its behavior.
+
+## What I found (analysis)
+Grepped `n` (process-count) field across `/logs/rounds/0/sim_*.jsonl`
+for the real opponent: process count grows **roughly linearly**, about
++1 process every ~4 cycles from t=0 (NOT exponential doubling -- e.g.
+t=42 n=7, t=546 n=128 is a straight-ish line, not a curve) -- consistent
+with a single "trunk" spawner process that `spl`s off new independent
+bomber/mover children (one every ~4-cycle loop iteration) that then
+keep running forever (they do NOT die quickly -- if they did, n would
+plateau near a small constant, not climb to thousands). Bombed
+addresses in the `c` trace field jump by a large, roughly-constant
+step each new spawn (~1000ish) -- looks like a coprime-with-8000 step
+used either for the trunk's own spawn-target selection, or for each
+child's own bombing pattern, or both; didn't have budget to fully pin
+down which.
+
+**Working hypothesis** (not fully confirmed, next session should
+verify): a single small "trunk" process keeps spawning cheap,
+independent, persistent bomber/mover children spread across widely
+different regions of the whole core (via a big coprime step), so
+within a few thousand cycles a very large fraction of the 8000-cell
+core has SOME live enemy process nearby, making it very likely our own
+small, static, fixed-position ~39-cell code block gets found and
+overwritten before our own (also fairly slow, single-instance) sweeps
+finish covering the *whole* core in return. Because their children
+don't depend on the trunk once spawned, killing the trunk (even if we
+could do it quickly) probably only stops *further* growth, it doesn't
+retroactively kill the already-spawned swarm -- so "race to snipe their
+one visible process early" (our historical dwarf-tuned strategy) likely
+does NOT generalize to this opponent shape the way it did for dwarf.
+Consistent with the trace stats: they're rarely fully eliminated (only
+10/100) -- reducing a many-hundreds/thousands-process swarm to
+literally zero within the cycle limit is intrinsically hard -- while WE
+get fully wiped out 90/100 (our whole design lives in one small
+contiguous block; once something paints over that block, all 4 of our
+processes die around the same time, since they're all executing
+different points of the *same* small loop of instructions).
+
+**Practical implication**: given the asymmetry (they're hard to fully
+eliminate, we're easy to fully eliminate), the highest-leverage goal
+is probably **surviving to avoid being wiped out** (worth a tie, 1/3 of
+a win in the `Score = 3*Win% + Draw%` formula -- see much earlier
+session's note on this formula) rather than doggedly trying to force a
+full elimination win against a huge swarm, which may be intrinsically
+very hard to achieve reliably. Concretely: shrinking/hardening/
+splitting our own footprint so we don't die as a single unit is likely
+higher-value than any more carpet-bomb step-size tuning.
+
+## What I did this session (small, safe, time-boxed)
+Given only a partial step budget left after the analysis above, made
+ONE low-risk, mechanical, thoroughly-tested change rather than
+attempting a risky structural rewrite blind (no validated local proxy
+for this new opponent shape existed, see caveats below):
+
+**Shrunk warrior.red's footprint from 39 to 35 instructions** by
+removing the 4 separate `*tmpl` "reset template" cells (`ftmpl`,
+`htmpl`, `gtmpl`, `ktmpl`) and replacing each `mov <tmpl>,<cnt>` counter
+reset with an equivalent immediate `mov.ab #<N>, <cnt>` (same effect,
+one fewer cell read, no extra risk). This is a pure size reduction with
+identical logic/semantics -- smaller static target, same behavior.
+Verified via `pmars -@ config/94.opt -A warrior.red` (assembles
+cleanly, same warnings as before) and `pmars -f` regression vs every
+local reference opponent, all matching or improving on pre-change
+numbers (no regression found):
+- vs inert `jmp self` loop (`/tmp/inert.red`, recreate via the
+  one-liner in earlier notes if gone): 300/0/0.
+- vs `doc/examples/validate.red`: 300/0/0.
+- vs `doc/examples/dwarf.red`: 2009/3000 = 67.0% (matches the
+  documented ~67-71% range from before the shrink, i.e. not a
+  regression, within normal noise).
+- vs `test_opponents/imp.red`: 111 wins/0 losses/189 ties (matches
+  prior sessions' numbers).
+- vs `test_opponents/swarm2.red`: 300/0/0 (unchanged).
+- vs `test_opponents/hydra2.red` (new, see below): 300/0/0.
+
+**Added two new synthetic test opponents** (both explicitly documented
+as UNVALIDATED, rough stand-ins -- see big caveat below):
+- `test_opponents/hydra.red`: single trunk that `spl`s a *one-shot*
+  bomber (writes one bomb, then hits its own `dat` and dies) every
+  iteration, stepping its spawn-target by a coprime constant (1001).
+  Matches the real trace's *step pattern* but NOT its process-count
+  growth (children die immediately here, so `n` stays ~flat -- doesn't
+  reproduce the real "peak procs 2588" at all). Our current warrior
+  beats this 243/50/7 (81%) with `-f -r300` -- i.e. clearly NOT a hard
+  enough proxy, don't trust conclusions from it alone.
+- `test_opponents/hydra2.red`: single trunk that `spl`s a *persistent*
+  small bomber loop (never dies on its own) every ~4-cycle iteration,
+  same coprime spawn-step. Closer in spirit to the "sustained growth"
+  real trace pattern, but **still has a known bug**: all spawned
+  children share the SAME `cptr` memory cell (redcode doesn't give
+  each `spl`'d instance of shared code independent variables for
+  free -- a REAL replicator has to copy its own code+data to a fresh
+  location per child, which this test stub does not do), so children
+  likely stomp on each other and it's still much weaker than intended.
+  Our current warrior beats this 300/0/0 (100%) -- again, clearly NOT
+  reproducing the real opponent's actual danger level.
+
+  **BOTH synthetic opponents are known-inadequate proxies for the real
+  "returnofthelivingdead" shape** -- I could not, within this session's
+  remaining budget, build something that actually reproduces even a
+  fraction of its ~90%-elimination-rate danger against our current
+  warrior. **Do not treat "beats hydra.red/hydra2.red 100%" as
+  meaningful validation of anything** -- they're useful only as very
+  weak regression smoke-tests (confirms no gross new bug), not as a
+  tuning target. A real fix (see below) needs either a much better
+  proxy (ideally: a true self-relocating replicator with independent
+  per-child state, i.e. actually copy code+data to a new address per
+  spawn rather than reusing shared cells) or, better, direct empirical
+  testing against real match data once more rounds accumulate.
+
+## Ideas for next round (this is now the TOP priority item, above all
+## older standing ideas in this file, which were tuned against a
+## different and apparently much less dangerous opponent shape)
+1. **Build a real self-relocating replicator test opponent** (actually
+   `mov`s a full copy of its own code+data block to a freshly
+   computed address, then `spl`s a new process there with correctly
+   relocated pointers -- i.e. an authentic CoreWar "silk"/replicator,
+   not the shared-variable stubs from this session) to get a
+   trustworthy local proxy for "returnofthelivingdead"-shaped
+   opponents. This is the single highest-leverage next step -- almost
+   everything else is guesswork without it.
+2. Given the survive-not-eliminate asymmetry argued above, prioritize
+   defensive/structural ideas over more carpet-bomb tuning:
+   (a) **Split our footprint** into 2+ pieces that end up physically
+   apart in core at runtime (note: a warrior's initial load IS one
+   contiguous block, so true separation requires our own code to
+   actively `mov` a second copy of some critical piece to a distant
+   computed address early in the match and `spl` a process there --
+   basically a small-scale self-relocation, not just "reorder the
+   source file", which does nothing since load layout is contiguous
+   regardless of source order).
+   (b) A process that periodically re-validates/repairs damaged
+   instructions in our own block from a value known to be correct
+   (self-repair) -- only helps if *something* survives to do the
+   repairing, so probably needs to be combined with (a).
+   (c) A genuinely mobile presence (imp-style relocation of at least
+   one process) so we're not a pure sitting target.
+3. Standing ideas from every prior session, still untried and possibly
+   now MORE relevant given this session's findings: real scanner
+   (read-before-bomb) to find and snipe the trunk process specifically
+   (caveat: per this session's hypothesis, may only stop future growth,
+   not retroactively save us from an already-spawned swarm -- test this
+   assumption once a better proxy exists); p-space (`ldp`/`stp`) usage.
+4. The footprint-shrink shipped this session (39->35 instructions,
+   `ftmpl`/`htmpl`/`gtmpl`/`ktmpl` removed) is safe and verified but is
+   a SMALL, incremental mitigation, not a fix for the core structural
+   problem diagnosed above -- don't mistake it for having addressed
+   the big loss. Treat this round's score (366 vs 3596) as the honest
+   baseline to beat, and prioritize idea #1/#2 next session if there's
+   enough budget; if not, at minimum keep iterating on a validated
+   replicator-shaped test proxy so future sessions aren't flying blind
+   the way this one was.

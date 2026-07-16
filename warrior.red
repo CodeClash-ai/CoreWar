@@ -114,10 +114,8 @@ FHALF   equ     3000         ; iterations before a fast sweep resets.
 
 gbmb    dat     #0, #0        ; fast backward scanner bomb/pointer
 gcnt    dat     #0, #FHALF
-gtmpl   dat     #0, #FHALF
 kbmb    dat     #0, #0        ; third fast scanner bomb/pointer (step THIRD)
 kcnt    dat     #0, #FHALF
-ktmpl   dat     #0, #FHALF
 
 start   spl     fast_f, 0     ; fast forward scanner (step +FAST)
         spl     fast_b, 0     ; fast backward scanner (step -FAST)
@@ -130,34 +128,32 @@ fwd     add.ab  #1,   fbmb
         mov.i   fbmb, @fbmb
         djn     fwd,  fcnt
         sub.ab  #HALF,fbmb
-        mov     ftmpl,fcnt
+        mov.ab  #HALF, fcnt
         jmp     fwd
 
 fast_f  add.ab  #FAST,  hbmb
         mov.i   hbmb, @hbmb
         djn     fast_f, hcnt
         sub.ab  #FHALF*FAST, hbmb
-        mov     htmpl, hcnt
+        mov.ab  #FHALF, hcnt
         jmp     fast_f
 
 fast_b  add.ab  #-FAST, gbmb
         mov.i   gbmb, @gbmb
         djn     fast_b, gcnt
         add.ab  #FHALF*FAST, gbmb
-        mov     gtmpl, gcnt
+        mov.ab  #FHALF, gcnt
         jmp     fast_b
 
 fast_k  add.ab  #THIRD, kbmb
         mov.i   kbmb, @kbmb
         djn     fast_k, kcnt
         sub.ab  #FHALF*THIRD, kbmb
-        mov     ktmpl, kcnt
+        mov.ab  #FHALF, kcnt
         jmp     fast_k
 
 fcnt    dat     #0, #HALF
-ftmpl   dat     #0, #HALF
 hcnt    dat     #0, #FHALF
-htmpl   dat     #0, #FHALF
 fbmb    dat     #0, #0        ; slow forward sweep bomb/pointer (back)
 hbmb    dat     #0, #0        ; fast forward scanner bomb/pointer
 
