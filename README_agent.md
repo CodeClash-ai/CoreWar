@@ -259,3 +259,79 @@ safety vs an inert `jmp start` loop and (b) win rate vs
    (see round-1 notes above for the one-liner), and recreate any
    baseline you want to diff against from git history
    (`git log -- warrior.red`) instead of /tmp.
+
+# Round 2 update (sonnet-5, this session #2)
+
+## Context
+- Confirmed via `/logs/rounds/0/results.json` and `/logs/rounds/1/results.json`:
+  real matches so far have been 4000-0 sonnet-5 vs an opponent named
+  "validate" in both prior rounds, and the trace data
+  (`/logs/rounds/1/trace.md`) shows it's still just the ships-with-pmars
+  `doc/examples/validate.red` demo (peak procs 1, eliminated 100/100 in
+  the traced sample). So the real opponent has been totally passive both
+  rounds -- but there's no guarantee that holds for round 3+, so treat
+  Dwarf-matchup tuning as the useful signal for "a real, moving
+  opponent" rather than assuming validate.red stays passive forever.
+
+## What I did
+1. **Found `pmars -f` (fixed starting-position series)** -- IMPORTANT
+   discovery for future tuning: without `-f`, `pmars -r N` uses a
+   time-based RNG seed, so re-running the *exact same* two warriors with
+   the *exact same* `-r N` gives visibly different `Results: W L T` each
+   time (I measured swings of +/-20 wins out of 300 just from rerunning
+   the identical command back-to-back). This means **all prior rounds'
+   win-rate numbers in this file (e.g. "54-62% vs Dwarf") are noisier
+   than they looked** -- they were likely never using a fixed seed
+   either. Adding `-f` makes results exactly reproducible across
+   reruns of the same warrior files, which makes A/B comparisons between
+   two candidate warriors *far* more trustworthy (same command run twice
+   in a row now gives bit-identical `Results:` lines). **Recommend always
+   using `-f` for any future tuning/A-B testing in this repo.**
+2. Re-validated the FAST grid search from round-2-session-1 using `-f`
+   (300 rounds, vs `doc/examples/dwarf.red`): confirmed FAST=16 is still
+   the best single divisor-of-8000 step size (tried 4,5,8,10,16,20,25,
+   32,40 -- 16 wins by a clear margin every time under `-f`, consistent
+   with the earlier non-`-f` grid search's conclusion, so that finding
+   holds up).
+3. Tried a structural change kept within the same process-count budget
+   (3 spawned `spl` processes + 1 main, matching last round's "1
+   slow + 2 fast" shape): **added a third fast sweeper** with step
+   `2*FAST=32` (also a divisor of 8000, so still safe per the
+   established divisor rule) alongside the existing `+FAST`/`-FAST`
+   pair, so there are now 3 fast residue-class sweeps racing a small
+   opponent instead of 2, still just 1 slow full-coverage backstop.
+   Under `-f` with 1000 rounds vs `doc/examples/dwarf.red`:
+   - Previous (1 slow + 2 fast, FAST=16): **572/1000 (57.2%)**
+   - New (1 slow + 3 fast, FAST=16, third at step 2*FAST=32): **591/1000
+     (59.1%)**
+   Reproducible (`Results:` line identical across reruns of the same
+   file with `-f`). Also re-checked safety: still 100/100 vs
+   `doc/examples/validate.red` and 100/100 vs an inert `jmp self` loop
+   (`/tmp/inert.red`, recreate via the one-liner in the round-0 section
+   above if you want it -- it does NOT persist across sessions).
+   **Shipped this 1-slow/3-fast version as the new `warrior.red`.**
+
+## Ideas for next round (didn't have step budget to try these myself)
+1. Push the "add more fast residue-class sweepers, same total process
+   budget" idea further -- e.g. try 4 fast sweepers (steps FAST, -FAST,
+   2*FAST, -2*FAST) with 0 dedicated slow process (folding the slow
+   full-coverage sweep's job into a 5th, or dropping the guaranteed-full-
+   coverage backstop entirely and seeing if it still wins -- risk: could
+   lose the "eventually kill anything, even a well-hidden opponent"
+   property that no fast/sparse sweep alone gives you). Use `-f` for
+   reproducible A/B this time (see note above).
+2. Still just one real reference opponent used for tuning
+   (`doc/examples/dwarf.red`); still haven't built the suggested
+   `test_opponents/` directory of small hand-written reference warriors
+   (imp ring, replicator, basic scanner) despite this being suggested
+   3 rounds running now. Would derisk tuning a lot, since a real
+   scanner-based opponent might behave completely differently from a
+   Dwarf-style blind bomber and our whole sweep architecture might not
+   transfer. If you have spare step budget next round, this is
+   probably the single highest-value thing to actually do (rather than
+   suggest again).
+3. Have NOT tried p-space (`ldp`/`stp`) at all despite 3 rounds of notes
+   suggesting it. Config confirms p-space is enabled
+   (`config/94.opt`... check `-S` default p-space size). Could be used
+   to store sweep state out of core, shrinking our footprint (see idea
+   #1 in the very first round's notes) -- still nobody's tried it.
