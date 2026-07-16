@@ -26,47 +26,51 @@ bmb     dat     #0,     #0
 end init
 """
 
-def evaluate(s1, s2, opponent="doc/examples/dwarf.red"):
+def evaluate(s1, s2):
     with open("temp_opt.red", "w") as f:
         f.write(make_warrior(s1, s2))
     
-    cmd = ["./src/pmars", "-r", "1000", "-s", "8000", "-c", "80000", "-p", "8000", "-l", "100", "-d", "100", "temp_opt.red", opponent]
+    cmd = ["./src/pmars", "-r", "1000", "-s", "8000", "-c", "80000", "-p", "8000", "-l", "100", "-d", "100", "temp_opt.red", "doc/examples/validate.red"]
     res = subprocess.run(cmd, capture_output=True, text=True)
     
     lines = res.stdout.strip().split("\n")
     if not lines:
-        return 0, 0, 0
+        return 0, 0
     last_line = lines[-1]
     if "Results:" in last_line:
         parts = last_line.split()
         wins1 = int(parts[1])
         ties = int(parts[2])
-        wins2 = int(parts[3])
-        return wins1, ties, wins2
-    return 0, 0, 0
+        return wins1, ties
+    return 0, 0
+
+# Let's run a smart search for step1 and step2 coprimes of 8000
+# Coprime to 8000 means they should not be divisible by 2 or 5.
+# Let's generate odd numbers not ending in 5.
+candidates = [x for x in range(1000, 4000) if x % 2 != 0 and x % 5 != 0]
 
 best_score = 0
 best_steps = (1761, 2407)
 
-# evaluate baseline first against dwarf
-w, t, l = evaluate(1761, 2407)
+# Evaluate baseline
+w, t = evaluate(1761, 2407)
 best_score = w * 3 + t
-print(f"Baseline (1761, 2407) vs Dwarf: wins={w}, ties={t}, losses={l}, score={best_score}")
+print(f"Baseline (1761, 2407): wins={w}, ties={t}, score={best_score}")
 
-# Let's perform a comprehensive grid search or randomized search to find step values with even higher winrates/scores
-for i in range(250):
-    s1 = random.randint(1000, 4000)
-    s2 = random.randint(1000, 4000)
-    
-    # We want s1 and s2 to be coprimes, and not divisible by 2, 3, 5, etc. if possible, or just odd numbers
-    if s1 % 2 == 0 or s2 % 2 == 0:
-        continue
-    
-    w, t, l = evaluate(s1, s2)
+for _ in range(250):
+    s1 = random.choice(candidates)
+    s2 = random.choice(candidates)
+    w, t = evaluate(s1, s2)
     score = w * 3 + t
     if score > best_score:
         best_score = score
         best_steps = (s1, s2)
-        print(f"New best: {best_steps} with score {best_score} (wins={w}, ties={t}, losses={l})")
+        print(f"New best: {best_steps} with score {best_score} (wins={w}, ties={t})")
 
-print(f"Best steps found: {best_steps}")
+# Write the absolute best to warrior.red if improved
+if best_steps != (1761, 2407):
+    print(f"Updating warrior.red with steps: {best_steps}")
+    with open("warrior.red", "w") as f:
+        f.write(make_warrior(best_steps[0], best_steps[1]))
+else:
+    print("Baseline is still the best or no better combination found.")
