@@ -1395,3 +1395,143 @@ wants to diff or revert.
    ~2500-process real opponent -- but this session's structural fix
    (footprint separation) directly targeted the single most concrete,
    evidenced failure mode from real logs, so it was prioritized first.
+
+# Round update (sonnet-5, this session -- HydraSweep prototype, NOT shipped)
+
+## Context
+Real logs available: `/logs/rounds/0`, `/1`, `/2`, all losses to opponent
+**"returnofthelivingdead"**: scores 366/3596, 644/3334, 692/3280 (i.e.
+DualSweep, shipped 2 sessions ago, only marginally improved things:
+692 vs the previous 644). `trace.md` round2: 24/100 wins, 0 ties,
+opponent avg peak procs **2981.8** (a massive swarm), us eliminated
+76/100.
+
+## Root-cause dig this session
+Used the raw `sim_*.jsonl` per-cycle traces again (see prior session's
+notes on the `t/c/p/n/d` format). Picked `sim_84` (a *very* fast loss,
+503 cycles) and fully decoded it with `pmars -F <offset> -T <file>`
+side-by-side (recreated the exact scenario locally: `warrior.red`
+loaded at 0, opponent-like start nearby). Findings:
+1. **DualSweep's replication logic itself is correct** (I initially
+   suspected the copy loop was stuck/buggy after seeing IP sit at
+   addresses 3-6 for hundreds of `t` units in the raw trace -- turned
+   out that's just literally how many cycles the 2-warrior round-robin
+   takes to execute 48 iterations of a 4-instruction loop; confirmed
+   with an isolated `-T` trace that it correctly reaches `start` and
+   spawns processes at the expected instruction count, no bug there).
+2. **The real failure mode is scale, not logic**: the opponent
+   ("returnofthelivingdead") is a genuine mass self-replicator that
+   reaches ~3000 peak processes and, from the trace, appears to have
+   MANY children bombing at slightly different, converging offsets
+   (values like 71,70,69,68,... decreasing toward 0 in the raw trace)
+   -- i.e. a wide spread of independent bombers methodically closes in
+   on wherever we happen to be loaded, and with thousands of them
+   active, some child finds our (still just 1-2 origins, ~48-cell)
+   footprint within a few hundred cycles, before our own defenses have
+   even finished standing up. DualSweep's 2-origin mitigation (from 2
+   sessions ago) helps a little (644->692) but is nowhere near enough
+   scale to matter against a ~3000-process swarm.
+
+## What I tried: HydraSweep (chain self-replication, NOT shipped)
+Prototyped (`hydra_wip.red` in repo root, NOT wired up as `warrior.red`)
+a much more aggressive structural idea: instead of 2 fixed origins,
+**chain-replicate MAXGEN=16 origins** evenly spaced around the whole
+core (`STEP = core/MAXGEN = 500`), via a decrementing `hopsleft`
+counter embedded in the copied block (each generation's replicate
+block re-executes in the child after `spl`, decrements `hopsleft`, and
+either hops again or stops -- fixed an actual bug in my first attempt
+where the child's `spl` landed straight at `start`, skipping its own
+`replicate` block entirely, so it could never continue the chain;
+fixed by landing children at `replicate` instead). **Also** changed
+each origin from the old "1 slow sweep (full core) + 3 fast residue
+sweeps" to a single simple full-coverage sweep *bounded to its own
+STEP-sized sector only* (never leaves its 500-cell slice) -- since the
+16 sectors exactly partition the whole core with no gaps/overlaps,
+this gets full-core coverage collectively with **zero friendly fire**
+between origins (unlike DualSweep, which had a measured friendly-fire
+cost between its 2 origins' full-core sweeps).
+
+Verified (via `pmars -F <offset> -T <file>`) the chain mechanics work
+exactly as designed: all 16 origins spawn correctly and in order
+(`s 0 0 1` ... `s 24239 0 16`, growing task count 1 by 1, no premature
+self-destructs, confirmed with several different `-F` offsets).
+
+**However, benchmarked much WORSE than the current DualSweep on every
+existing local reference**:
+- vs `doc/examples/dwarf.red`: only 37.6% (188/500, `-f`) vs DualSweep's
+  ~66% (331/500 in the same session, same settings).
+- **Head-to-head vs the current `warrior.red` (DualSweep): HydraSweep
+  loses badly, 6/300 (2%).**
+- vs `validate.red`/`imp.red`/`swarm.red`/`swarm2.red`/`hydra2.red`:
+  fine/no regression (all still ~100% or matching old behavior) --
+  but these don't discriminate between the two designs much.
+
+**Diagnosed why it's worse**: the chain is *serial* -- origin K only
+starts fighting after origin K-1 has finished its own copy+spl, so the
+LAST origins in the chain (e.g. origin 16) don't start their local
+sweep until ~24000 cycles in (measured directly in the `-T` trace
+above). Against a single static/findable target like `dwarf.red`
+(only in ONE of the 16 sectors), if that target happens to fall in a
+late-chain origin's sector, we simply don't reach it in time relative
+to the old design's single sweep (which starts covering ground from
+cycle ~200 onward, continuously, across nearly the whole core). The
+old design's "cover the *whole* core with 1 continuous sweep, slower
+per-cell but starts immediately" beats "cover 1/16th of the core very
+fast, but 15 of those local sweeps don't even start until deep into
+the game" for a *single, static* opponent. It's plausible (but
+UNTESTED -- I ran out of session budget) that HydraSweep is still
+*better* specifically against the real swarm-shaped opponent (many
+scattered simultaneous targets showing up early and everywhere, which
+is a very different shape from one static dwarf) -- but I have no
+evidence for that, and given it's clearly worse on every metric I
+could actually check, I did **NOT** ship it. Kept `warrior.red`
+unchanged (still DualSweep, same as last session) rather than gamble a
+large, mostly-unvalidated rewrite this session.
+
+## Ideas for next round (if picking up HydraSweep specifically)
+1. **Fix the serial-latency problem** before trying HydraSweep again:
+   spawn origins in a *tree/binary-doubling* pattern instead of a
+   linear chain (origin 1 spawns origin 2 AND jumps into its own
+   sweep; but instead of a single linear chain, have EACH origin, after
+   its first hop, do a SECOND hop to a different, farther offset --
+   i.e. doubling: 1 origin -> 2 -> 4 -> 8 -> 16, only ~4 sequential
+   hop-latencies deep instead of 16, since hops happen in parallel
+   once multiple origins exist). This should fix the "far sectors
+   start fighting too late" problem while keeping the no-friendly-fire
+   sector-partition idea, which seems structurally sound on its own.
+2. Add back a couple of bounded "fast" residue sweeps *within each
+   origin's own sector* (mirroring DualSweep's FAST/THIRD constants,
+   just bounded to the local STEP range instead of full core) --
+   might help each origin find a target in ITS sector faster, closing
+   some of the gap vs dwarf.red even before fixing #1.
+3. Still highest priority overall (flagged 2+ sessions running): get a
+   real validated proxy for "returnofthelivingdead"'s actual behavior
+   (a true multi-generation self-relocating replicator swarm, not the
+   simplified `swarm.red`/`swarm2.red`/`hydra2.red` stand-ins, which
+   this session confirmed AGAIN all still get beaten 100% by whatever
+   we throw at them and thus don't discriminate between design
+   choices at all -- see the vs-swarm*/hydra2 100% numbers above,
+   which were IDENTICAL for both old and new designs, i.e. zero
+   signal). Without this, any structural change here is a guess
+   validated only against `dwarf.red`, which may not be the right
+   thing to optimize for anymore given 3 real rounds now show the
+   actual opponent looks nothing like `dwarf.red`.
+4. `hydra_wip.red` (this session's prototype, left in repo root, NOT
+   wired to `warrior.red`) has the working, verified chain-replication
+   + sector-partition mechanics (verified via `-T` trace as described
+   above) -- reuse this as a base rather than re-deriving it, just
+   fix the latency issue (idea #1) before attempting to actually ship
+   a variant of it.
+5. Given the real score has been 366 -> 644 -> 692 (small, incremental
+   gains each session, but nowhere near competitive against a
+   ~3000-process swarm), and this session's more ambitious attempt at
+   a bigger structural swing regressed hard on every available local
+   benchmark, it might also be worth a session that tries much
+   *smaller*, safer increments on top of DualSweep instead of another
+   big swing -- e.g. just increasing MAXGEN modestly (try 3-4 origins
+   instead of 2) using the OLD (already-validated) full-core-sweep-per-
+   origin design rather than adding the new sector-bounded-sweep +
+   long hop-chain changes at the same time, to isolate which part of
+   this session's change (more origins vs. sector-bounding vs. chain
+   latency) is actually responsible for the regression before trying
+   a bigger rewrite again.
