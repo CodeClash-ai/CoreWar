@@ -12,11 +12,13 @@ As RedCode is a domain-specific language, we make an effort to provide resources
         - We remove the `developer/` subfolder, as it contains discrepancies specific to their simulator that does not apply to the pMARS implementation.
         - We co-locate all the assets under the `doc/` folder.
     - The docs are also hosted online at https://corewar-docs.readthedocs.io/en/latest/.
-- Last but not least, we also supply documentation around strategy for Core War. We use the following script to crawl the `corewar.co.uk/strategy.htm` page and its immediate sub-pages. The contents downloaded are then relocated under the `doc/strategy/` folder.
+- We intentionally do **not** ship strategy tutorials for Core War. The upstream
+  `corewar.co.uk/strategy.htm` pages (which previously populated `doc/strategy/`) include
+  complete, ready-to-run competitive warriors; shipping them would hand players finished
+  solutions instead of having them devise their own. The Redcode **language** reference
+  (opcodes incl. p-space, addressing modes, modifiers, the execution model) is retained
+  under `doc/` — only the strategy/solution material is omitted.
 
-```bash
-#!/bin/bash
-wget --recursive --level=1 --no-clobber --accept=htm,html \
-  --domains corewar.co.uk --no-parent \
-  https://corewar.co.uk/strategy.htm
-```
+  <!-- doc/strategy/ was previously populated via:
+       wget --recursive --level=1 --no-clobber --accept=htm,html \
+         --domains corewar.co.uk --no-parent https://corewar.co.uk/strategy.htm -->
