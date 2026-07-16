@@ -1,13 +1,12 @@
 ;redcode-94
-;name Smooth Noodle Net 309x24
+;name Smooth Dwarf Sweeper 187x20r
 ;author gpt-5-5
-;strategy Specialized against observed Smooth Noodle Map 6.
-;strategy The round-0 traces show an aggressive silk/paper that first copies a block
-;strategy about 309 cells backwards (initial opponent writes appear at start-309..).
-;strategy Run 24 redundant DAT stones with bombing step 309 to land on that copy
-;strategy lattice quickly while preserving enough redundancy after paper overwrites.
+;strategy Reverted to the round-0 proven anti-Smooth Noodle Map 6 stone.
+;strategy 20 independent DAT bombing loops with step 187.  Round-0 actual score
+;strategy was 667-326, while the experimental 309x24 in round 1 regressed to 583-404.
+;strategy The shorter 81-instruction body also gives Smooth's silk fewer cells to hit/copy.
 ;assert CORESIZE == 8000
-;assert MAXLENGTH >= 97
+;assert MAXLENGTH >= 81
 start   spl     b1
         spl     b2
         spl     b3
@@ -27,82 +26,66 @@ start   spl     b1
         spl     b17
         spl     b18
         spl     b19
-        spl     b20
-        spl     b21
-        spl     b22
-        spl     b23
         jmp     b0
-b0      mov.i   bomb,   309
-        add.ab  #309,  b0
+b0      mov.i   bomb,   187
+        add.ab  #187,  b0
         jmp     b0
-b1      mov.i   bomb,   309
-        add.ab  #309,  b1
+b1      mov.i   bomb,   187
+        add.ab  #187,  b1
         jmp     b1
-b2      mov.i   bomb,   309
-        add.ab  #309,  b2
+b2      mov.i   bomb,   187
+        add.ab  #187,  b2
         jmp     b2
-b3      mov.i   bomb,   309
-        add.ab  #309,  b3
+b3      mov.i   bomb,   187
+        add.ab  #187,  b3
         jmp     b3
-b4      mov.i   bomb,   309
-        add.ab  #309,  b4
+b4      mov.i   bomb,   187
+        add.ab  #187,  b4
         jmp     b4
-b5      mov.i   bomb,   309
-        add.ab  #309,  b5
+b5      mov.i   bomb,   187
+        add.ab  #187,  b5
         jmp     b5
-b6      mov.i   bomb,   309
-        add.ab  #309,  b6
+b6      mov.i   bomb,   187
+        add.ab  #187,  b6
         jmp     b6
-b7      mov.i   bomb,   309
-        add.ab  #309,  b7
+b7      mov.i   bomb,   187
+        add.ab  #187,  b7
         jmp     b7
-b8      mov.i   bomb,   309
-        add.ab  #309,  b8
+b8      mov.i   bomb,   187
+        add.ab  #187,  b8
         jmp     b8
-b9      mov.i   bomb,   309
-        add.ab  #309,  b9
+b9      mov.i   bomb,   187
+        add.ab  #187,  b9
         jmp     b9
-b10     mov.i   bomb,   309
-        add.ab  #309,  b10
+b10     mov.i   bomb,   187
+        add.ab  #187,  b10
         jmp     b10
-b11     mov.i   bomb,   309
-        add.ab  #309,  b11
+b11     mov.i   bomb,   187
+        add.ab  #187,  b11
         jmp     b11
-b12     mov.i   bomb,   309
-        add.ab  #309,  b12
+b12     mov.i   bomb,   187
+        add.ab  #187,  b12
         jmp     b12
-b13     mov.i   bomb,   309
-        add.ab  #309,  b13
+b13     mov.i   bomb,   187
+        add.ab  #187,  b13
         jmp     b13
-b14     mov.i   bomb,   309
-        add.ab  #309,  b14
+b14     mov.i   bomb,   187
+        add.ab  #187,  b14
         jmp     b14
-b15     mov.i   bomb,   309
-        add.ab  #309,  b15
+b15     mov.i   bomb,   187
+        add.ab  #187,  b15
         jmp     b15
-b16     mov.i   bomb,   309
-        add.ab  #309,  b16
+b16     mov.i   bomb,   187
+        add.ab  #187,  b16
         jmp     b16
-b17     mov.i   bomb,   309
-        add.ab  #309,  b17
+b17     mov.i   bomb,   187
+        add.ab  #187,  b17
         jmp     b17
-b18     mov.i   bomb,   309
-        add.ab  #309,  b18
+b18     mov.i   bomb,   187
+        add.ab  #187,  b18
         jmp     b18
-b19     mov.i   bomb,   309
-        add.ab  #309,  b19
+b19     mov.i   bomb,   187
+        add.ab  #187,  b19
         jmp     b19
-b20     mov.i   bomb,   309
-        add.ab  #309,  b20
-        jmp     b20
-b21     mov.i   bomb,   309
-        add.ab  #309,  b21
-        jmp     b21
-b22     mov.i   bomb,   309
-        add.ab  #309,  b22
-        jmp     b22
-b23     mov.i   bomb,   309
-        add.ab  #309,  b23
-        jmp     b23
 bomb    dat.f   #0,     #0
         end     start

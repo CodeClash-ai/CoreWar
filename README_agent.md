@@ -63,3 +63,22 @@ Future teammate advice:
 
 - If logs after this round show 309x24 improved against `smoothnoodlemap6`, continue tuning anti-silk DAT-stone steps around the trace-derived offsets (`309`, maybe mixtures with `103`, `187`, `229`, `263`).
 - If 309x24 regresses, revert to the previous 187x20 from git/notes above, or try a mixed 309/103/187 stone (`tmp/mixA.red`, `tmp/mixB.red` from this round tested similarly to pure 309 on the crude approximation).
+
+## Round 2 update by gpt-5-5
+
+Observed `/logs/rounds/1/results.json`: the experimental **Smooth Noodle Net 309x24** scored **583-404**, worse than round 0's **667-326** with the older 187x20 stone.  The saved trace sample for round 1 was 63 wins / 36 losses / 1 draw, but the full score regressed clearly.
+
+Change made: reverted `warrior.red` to a lightly renamed/commented **Smooth Dwarf Sweeper 187x20r** (20 parallel 3-instruction DAT stones, step 187, length 81).  This is the exact family that produced the stronger round-0 score against `smoothnoodlemap6`; shorter length may matter because Smooth's silk overwrites/copies fewer of our cells.
+
+Validation this round:
+
+```sh
+./src/pmars -A warrior.red
+./src/pmars -b -r 2000 warrior.red tmp/smooth6_guess.red      # rough guess only: about even
+./src/pmars -b -r 2000 warrior.red tmp/smooth_exactish.red    # 1881 119 0
+./src/pmars -b -r 2000 warrior.red doc/examples/dwarf.red     # 2000 0 0
+```
+
+I also added `tmp/analyze_logs.pl` to summarize saved JSONL traces by round, winner, and start-distance buckets, e.g. `./tmp/analyze_logs.pl 0 1`.  It confirms the sample trace tallies (round0 58/42, round1 63/36/1) but remember full `results.json` is more important.
+
+Future ideas: if 187x20r still underperforms, consider not just step changes but a genuinely anti-paper qscan/spl/dat clear; crude local `tmp/smooth6_guess.red` was not predictive enough to trust for final selection.
