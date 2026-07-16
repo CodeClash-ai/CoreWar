@@ -1,91 +1,24 @@
 ;redcode-94
-;name Smooth Dwarf Sweeper 187x20r
+;name Return Trap 237
 ;author gpt-5-5
-;strategy Reverted to the round-0 proven anti-Smooth Noodle Map 6 stone.
-;strategy 20 independent DAT bombing loops with step 187.  Round-0 actual score
-;strategy was 667-326, while the experimental 309x24 in round 1 regressed to 583-404.
-;strategy The shorter 81-instruction body also gives Smooth's silk fewer cells to hit/copy.
+;strategy Emergency anti-paper/scissors for "return of the living dead".
+;strategy Round-0 logs show a 33-line paper/silk with many processes/copies,
+;strategy while our pure DAT stone lost 946-27.  This version scans for any
+;strategy non-zero cell, lays an SPL/DAT trap around it, then keeps scanning.
+;strategy It is intended to stun replicators into draws/wins rather than race them
+;strategy with sparse DAT bombing.
 ;assert CORESIZE == 8000
-;assert MAXLENGTH >= 81
-start   spl     b1
-        spl     b2
-        spl     b3
-        spl     b4
-        spl     b5
-        spl     b6
-        spl     b7
-        spl     b8
-        spl     b9
-        spl     b10
-        spl     b11
-        spl     b12
-        spl     b13
-        spl     b14
-        spl     b15
-        spl     b16
-        spl     b17
-        spl     b18
-        spl     b19
-        jmp     b0
-b0      mov.i   bomb,   187
-        add.ab  #187,  b0
-        jmp     b0
-b1      mov.i   bomb,   187
-        add.ab  #187,  b1
-        jmp     b1
-b2      mov.i   bomb,   187
-        add.ab  #187,  b2
-        jmp     b2
-b3      mov.i   bomb,   187
-        add.ab  #187,  b3
-        jmp     b3
-b4      mov.i   bomb,   187
-        add.ab  #187,  b4
-        jmp     b4
-b5      mov.i   bomb,   187
-        add.ab  #187,  b5
-        jmp     b5
-b6      mov.i   bomb,   187
-        add.ab  #187,  b6
-        jmp     b6
-b7      mov.i   bomb,   187
-        add.ab  #187,  b7
-        jmp     b7
-b8      mov.i   bomb,   187
-        add.ab  #187,  b8
-        jmp     b8
-b9      mov.i   bomb,   187
-        add.ab  #187,  b9
-        jmp     b9
-b10     mov.i   bomb,   187
-        add.ab  #187,  b10
-        jmp     b10
-b11     mov.i   bomb,   187
-        add.ab  #187,  b11
-        jmp     b11
-b12     mov.i   bomb,   187
-        add.ab  #187,  b12
-        jmp     b12
-b13     mov.i   bomb,   187
-        add.ab  #187,  b13
-        jmp     b13
-b14     mov.i   bomb,   187
-        add.ab  #187,  b14
-        jmp     b14
-b15     mov.i   bomb,   187
-        add.ab  #187,  b15
-        jmp     b15
-b16     mov.i   bomb,   187
-        add.ab  #187,  b16
-        jmp     b16
-b17     mov.i   bomb,   187
-        add.ab  #187,  b17
-        jmp     b17
-b18     mov.i   bomb,   187
-        add.ab  #187,  b18
-        jmp     b18
-b19     mov.i   bomb,   187
-        add.ab  #187,  b19
-        jmp     b19
-bomb    dat.f   #0,     #0
+;assert MAXLENGTH >= 12
+step    equ     237
+start   spl     1
+        spl     1
+scan    add.ab  #step,  test
+test    jmz.f   scan,   100
+        mov.i   sb,     >test
+        mov.i   db,     >test
+        mov.i   sb,     <test
+        mov.i   db,     <test
+        jmp     scan
+sb      spl     #0,     #0
+db      dat.f   #0,     #0
         end     start

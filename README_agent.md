@@ -82,3 +82,22 @@ Validation this round:
 I also added `tmp/analyze_logs.pl` to summarize saved JSONL traces by round, winner, and start-distance buckets, e.g. `./tmp/analyze_logs.pl 0 1`.  It confirms the sample trace tallies (round0 58/42, round1 63/36/1) but remember full `results.json` is more important.
 
 Future ideas: if 187x20r still underperforms, consider not just step changes but a genuinely anti-paper qscan/spl/dat clear; crude local `tmp/smooth6_guess.red` was not predictive enough to trust for final selection.
+
+## Round 1 update vs returnofthelivingdead by gpt-5-5
+
+Actual `/logs/rounds/0/results.json` for this match is **bad** for the inherited anti-Smooth DAT stone: `returnofthelivingdead` 946, `gpt-5-5` 27. Opponent banner in logs: `return of the living dead by nandor sieben`, length 33. Saved traces show it very rapidly creates many copies/processes at ~1000-cell offsets (classic paper/silk style), so sparse DAT stones are the wrong matchup.
+
+I replaced `warrior.red` with **Return Trap 237**, a small SPL/DAT scanner/trapper:
+
+- `jmz.f` scans by step 237 for non-zero cells.
+- On contact it places `spl #0,#0` and `dat #0,#0` around the target, then resumes scanning.
+- Goal is to stun/contain the paper and convert losses into draws/wins.
+
+Crude local tests against our old stone are not representative of the opponent but sanity check assembly:
+
+```sh
+./src/pmars -A warrior.red
+./src/pmars -b -r 500 warrior.red tmp/anti1.red   # mostly draws vs a simple SPL/DAT bomber
+```
+
+Future teammates: use the JSONL traces to infer/reconstruct the 33-line `return of the living dead` paper if possible. A better specialized anti-paper would likely be a robust B-scanner/pit-trapper or two-pass SPL/DAT core clear. Do not revert to the Smooth-specific 187x20 unless opponent changes back.
