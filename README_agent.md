@@ -260,3 +260,36 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   /tmp/stone.red, /tmp/scanner.red, /tmp/current.red (= OLD step400 warrior for H2H).
 - IF opponent stays a replicator: this config should convert many of the old ties/losses into wins.
   If it changes to a SCANNER again, revert silk step toward 400 (scanners punish spread-out copies).
+
+## ROUND (opponent = notepaper / "Note Paper" by Scott Nelson) UPDATE -- opus-4-8, LOST 2484-4
+- !!! NEW OPPONENT = **notepaper** = "Note Paper" by Scott Nelson, a LEGENDARY hyper-optimized
+  paper/replicator (possibly paper+bomber hybrid). Round 0 result: LOST BADLY 2484-4.
+  Traced: notepaper 72 WIN / 0 LOSS / 28 TIE. Full match: 1184W / 1L / 715T.
+  KEY FACTS from traces: notepaper NEVER dies (0 eliminations), peaks ~2848 procs, owns ~59% core.
+  OUR SilkGuard gets ELIMINATED 72/100 (peaks 5991 procs then collapses & dies).
+- ANALYSIS: The real Note Paper is far stronger than any surrogate I could build. SilkGuard
+  (silk step=2000, 3-tap DAT bomber, bstep=3800) BEATS every surrogate I made:
+    /tmp/strong.red (paper+stone, pstep2667/step3037): SilkGuard 103-19-78
+    /tmp/notepaper.red (silk step2667): 138-27-35
+    /tmp/purepaper.red (silk step2000): 147-19-34
+    /tmp/aggro.red (paper step100 + 2-tap bomber step3037): 121-40-39
+  => I CANNOT reproduce the real matchup locally. Surrogates lie (too weak). Trust real scores.
+- EXPERIMENTS THIS ROUND (all vs surrogates; NONE improved on current 3-tap/step2000 -> KEPT AS-IS):
+  - silk step sweep {500,1000,1500,2000,2667,3044}: step=2000 has FEWEST losses across ALL surrogates
+    (14/16/17/26) = best survival. step=2667/3044 had more losses. KEEP 2000.
+  - bstep sweep {3800,3799,5333,2333}: all within noise (bomber loops many times, gcd irrelevant).
+  - 1-tap tight bomber: WORSE (more losses). 4-tap: WORSE (losses 28/33 vs 3-tap's 19/19). 3-tap = sweet spot.
+  - DUAL bomber (2nd bomber offset 4000): MUCH WORSE (losses 40-42) -- overwrites own silk (matches
+    all prior teammates' notes). Reject 2-bomber configs permanently.
+  - Pure paper (no bomber): losses jump to 55-68 vs strong surrogate. The bomber is ESSENTIAL
+    (cuts losses to ~10-19). Do NOT remove the bomber.
+  - Imp spiral: lost 0-200 to surrogate. Not viable here.
+- CONCLUSION: No code change -- current SilkGuard is the strongest config I could verify, and it
+  crushes every buildable surrogate. The real Note Paper is simply a stronger paper than we can
+  build/tune blindly. To beat it, a future teammate needs EITHER (a) the actual Note Paper source
+  to tune against (search doc/ again -- I did not find it), OR (b) a genuinely novel anti-paper
+  weapon: a self-replicating BOMBER (a "paper-stone" where the STONE also replicates so bombing
+  throughput scales with core coverage), or a proper SPL-carpet vampire that clogs enemy procs.
+  Hand-written scanners have repeatedly failed (see prior notes) -- verify solo behavior first.
+- Surrogates for next teammate (outside /workspace, recreate): /tmp/strong.red, /tmp/notepaper.red,
+  /tmp/purepaper.red, /tmp/aggro.red. Test: ./src/pmars -r 200 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
