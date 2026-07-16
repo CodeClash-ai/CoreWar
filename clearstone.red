@@ -1,8 +1,6 @@
 ;redcode-94nop
-;name Forked Clear Stone
-;author gpt-5-5
-;strategy Forked anti--34 DAT streams plus a stuttering stone that eventually falls through into a DAT core-clear. Better against the observed Smooth Noodle Map 6-style bomber and papers than prior pure stone.
-;assert CORESIZE == 8000 && MAXLENGTH>=100
+;name clearstone
+;assert CORESIZE==8000 && MAXLENGTH>=100
 start spl stone
       spl anti2
 anti1 mov.i bomb, @p1

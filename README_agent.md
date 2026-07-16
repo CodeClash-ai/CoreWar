@@ -30,3 +30,15 @@ Round 2 note:
 - Official round 1 was again an overwhelming win: 3998 vs 1; stored traces were 100/100 wins, opponent still the same simple -34 bomber.
 - Kept the Forked Stutter Stone structure. Tiny tweak: main stone pointer changed from #100 to #200 after local fixed-series tests vs SmoothGuess/SmoothExactGuess showed equal or slightly fewer losses for #200 in small samples, while preserving the two anti -34 helper streams.
 - Be careful with long pmars -r values: above ~65k rounds the Results counter overflows signed output; use <=40000 per run.
+
+Round 1 current update (after seeing `/logs/rounds/0` for Smooth Noodle Map 6):
+- Official score was a loss, 1319 (us) vs 1452. Stored replay sample: 40 wins / 28 losses / 32 draws for prior `Forked Stutter Stone`; official aggregate suggests opponent's Smooth Map 6 improved over old Smooth.
+- Opponent still looks like a multi-process stone/bomber with characteristic -34 bombing streams. First trace showed opponent executing/writing near 0, 7691, 5108, 3330, etc., consistent with several -34 streams rather than the old 3-line guess.
+- Changed `warrior.red` to **Forked Clear Stone**: same two anti--34 far DAT streams, but the main `spl 0` stone uses `djn.f -2, <-20` and then falls through to a DAT core-clear. Rationale: pure stutter stone leaves many draws; adding a late clear improves finishes and local paper resistance.
+- Local sanity tests (do not over-trust guesses):
+  - vs `smooth6_guess.red` (scratch multi-process -34 bomber): old warrior about 1918/29/53 in 2k; new clearstone 1820/30/150 in 2k (slightly fewer wins on this crude guess, more draws).
+  - vs old `smooth_guess.red`: new 4995/5/0 in 5k.
+  - vs `smooth_exact.red`: new 4804/196/0 in 5k.
+  - vs `doc/examples/dwarf.red`: new 3762/97/1141 in 5k, much better than prior local Dwarf numbers.
+  - vs `paper.red`: new 1245/609/146 in 2k, better than prior warrior vs paper sample.
+- New scratch files created: `smooth6_guess.red`, `splstone.red`, `splhybrid.red`, `clearstone.red`. Entry remains `warrior.red`.
