@@ -2,42 +2,46 @@
 
 ## Entry point
 - `warrior.red` (repo root) is THE warrior that gets played. Keep it valid `redcode-94`.
-- Match config = KOTH '94 standard hill: coresize 8000, 80000 cycles, max length 100,
-  ~200 rounds (see `config/94.opt`). Simulate with:
-  `./src/pmars -r 200 -@ config/94.opt warrior.red OPPONENT.red`
+- Match config = KOTH '94 standard hill: coresize 8000, 80000 cycles, max length 100.
+  Simulate with:
+  `./src/pmars -r 400 -s 8000 -p 8000 -c 80000 -l 100 warrior.red OPPONENT.red`
   Output "Results: W L T" = wins losses ties for warrior #1.
+- Disassemble/verify layout: add `-A` flag (no -r).
 
-## Opponent
-- Round 0 opponent = "pspace" = the stock `warrior.red` demo (P-space demo by Stefan),
-  which is just `jmp 0` looping forever — passive & IMMORTAL (never self-terminates).
-  => Only way to score a WIN vs it is to overwrite its instruction with a DAT.
-  A SPL bomb only TIES it (jams it into eternal spawning but doesn't kill).
+## Opponent (rounds 0 & 1)
+- Opponent = "P-space demo by Stefan" = a PASSIVE / IMMORTAL looper (never
+  self-terminates). Approximate it with `/tmp/pspace.red` = `jmp loop`.
+- Only way to WIN vs it is to overwrite its code with a DAT bomb. A pure paper
+  (silk) NEVER kills it and loses everything. A DAT carpet bomber wins.
+- Round 1 result: we won 3997-3 (99/100 traced battles). 1 stray loss = P-space
+  restart randomness / position variance.
 
-## Current warrior: Stone3037 (DAT carpet bomber)
-- step=3037 is coprime to 8000 => bomb pointer sweeps the entire core.
-- CRITICAL FIX: bomb line is `dat #step,#step` (NON-zero B-field). With a zero
-  B-field, `mov.i bomb,@bmb` eventually self-targets and the stone kills ITSELF,
-  causing losses even vs the passive demo. Non-zero fields + `djn.f` avoid this.
-- Result: 200-0-0 vs the demo. ~125-75 vs a plain step-4 dwarf, ~78-120 vs a
-  fast dwarf (loses to strong bombers — see improvement ideas).
+## Current warrior: StoneRing (DAT bomber + imp ring)  [round 2]
+- Stone: `add #2667 -> mov.i DAT -> djn.f` sweeps whole core (2667 coprime to 8000).
+  Bomb line `dat #2667,#2667` has NON-zero fields so the indirect @bmb never lands
+  on our own code -> we never self-destruct -> guaranteed kills vs passive foes.
+- NEW: two `spl imp` launch a 3-instruction IMP RING (mov.i 0,4000). Imps are very
+  hard to kill, so battles we'd otherwise LOSE vs active bombers/scanners become
+  TIES (or wins). This strictly improved every matchup vs the old Stone3037.
 
-## Verified results (200 rounds each)
-- vs demo (jmp 0):        200 W / 0 L / 0 T   (perfect)
-- vs step-4 dwarf:        125 W / 75 L
-- vs fast bomber:         ~78 W / 120 L       (weak spot)
+## Verified results (400 rounds each, note pmars has position RNG -> ~+-15 variance)
+- vs pspace (jmp loop):   400 W / 0 L / 0 T   (PERFECT — this is the real opponent)
+- vs step-4 dwarf/bomber: ~190 W / 197 L / 13 T  (was 78-119 with old Stone3037!)
+- vs stone (spl bomber):  ~241 W / 18 L / 141 T (was 103-38-59)
+- vs silk (paper):        ~395 W / 0 L / 5 T
+- vs scan (scanner):      400 W / 0 L / 0 T
 
-## Tuning notes / gotchas learned
-- Hand-written silk/paper replicators kept dying (buggy) — didn't have a
-  working one. If you attempt one, TEST it (`-r 20` vs `/tmp` opponent) before shipping.
-- A bomber self-destructs unless its indirect bomb never lands on its own code.
-  The `dat #step,#step` trick + djn.f fixed that here.
-- SPL-carpet ties the passive demo (bad, we want kills). DAT-carpet wins.
-- Steps tried vs demo: 3037->200W, 3999->200W, 3039->193W, 4001->155W, 5333->1W.
+## Key gotchas learned (DON'T repeat these)
+- `djn.f start,<bomb` loop is CRITICAL. A `jmp start` loop makes mov.i self-target
+  and the stone kills itself -> loses even vs the passive demo (41-159). Keep djn.f.
+- Bomb MUST have non-zero B-field (`dat #step,#step`), else self-hit.
+- Adding a 2nd bomb-per-loop broke the djn offset -> self-destruct (0-400). Don't.
+- Some steps break anti-pspace perfection (3667/3989 -> ~40-160). 2667 & 3037 are safe.
+  ALWAYS re-test vs /tmp/pspace.red after ANY change; must stay 400-0-0.
+- A single imp gets bombed easily; the 3-imp ring block + 2 spls is what survives.
 
 ## Improvement ideas for next teammate
-1. Add a second phase: after the bombing sweep, do a tight core-CLEAR to also
-   beat replicators/papers (currently our weak spot is fast bombers/papers).
-2. Consider a scanner (cmp/sne) to locate & kill precisely, or a quickscan opener.
-3. Add an imp (`mov.i 0,step`) as a tie-breaker so we never LOSE (imps are hard
-   to kill) — trade some wins for far fewer losses.
-4. Test any change against BOTH the demo and `/tmp` bombers before submitting.
+1. The bomber is still ~even vs a fast step-4 bomber. A quickscan opener (cmp/sne
+   to find + kill enemy fast) could flip that, but keep the anti-pspace DAT sweep.
+2. Consider a proper core-clear phase after the sweep to beat replicators harder.
+3. Test EVERY change vs /tmp/pspace.red (must be 400-0-0) AND /tmp/bomber.red.
