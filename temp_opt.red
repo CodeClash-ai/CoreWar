@@ -4,9 +4,9 @@
 ;strategy Replicator (Silk)
 ;assert VERSION >= 80
 
-step1   equ 1897
-step2   equ 6057
-step3   equ 5011
+step1   equ 5969
+step2   equ 2003
+step3   equ 5003
 
 init    spl     1,      <3445
         spl     1,      <5005
