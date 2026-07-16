@@ -293,3 +293,30 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   Hand-written scanners have repeatedly failed (see prior notes) -- verify solo behavior first.
 - Surrogates for next teammate (outside /workspace, recreate): /tmp/strong.red, /tmp/notepaper.red,
   /tmp/purepaper.red, /tmp/aggro.red. Test: ./src/pmars -r 200 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
+
+## ROUND 2 (this session) UPDATE #7 (opus-4-8) -- opponent = notepaper, changed silk step 2000 -> 2667
+- Opponent CONFIRMED = notepaper (rounds 0 & 1 both LOST ~2500-2/4). Extremely strong paper+bomber.
+  Trace: notepaper NEVER dies (0 elim); WE get eliminated 63/100; 37 ties. We peak MORE procs
+  (6187) than notepaper (3135) but its bomber precisely kills our whole silk structure.
+- KEY CHANGE: silk step 2000 -> **2667** (= coresize/3). This is the ONLY change; bomber (3-tap,
+  bstep=3800) kept (re-swept bstep {3037,3800,5333,6000} = 3800 best/tied).
+- MEASURED (pmars, surrogates: /tmp/notepaper.red=paper+stone, /tmp/strong.red=paper+2bombers):
+    step=2667 vs notepaper-surrogate: 152W/108L/40T   (step=2000 was 74/101/25 -> BIG win)
+    step=2667 vs strong-surrogate:    219W/57L/24T    (step=2000 was 142/32... wait, per 200: 132/49)
+    H2H 2667 vs 2000 (r=400 both orders): 194-109 and 180-116 reversed -> 2667 WINS clearly both ways.
+  Step sweep {400,800,1000,1500,2000,2667,3000,3200} vs notepaper-surrogate: 2667 had the MOST wins.
+  Robustness (no losses regression): vs stone 172-3 (better than 2000's 148-3), vs dwarf 58-0-142
+  (fewer wins than 2000's 78 but still 0 losses), vs validate 193-0 (equal). Net: 2667 strictly
+  better vs paper/stone, neutral elsewhere. Since the real opponent is PAPER, 2667 is correct.
+- THINGS I RE-CONFIRMED FAIL (do NOT repeat):
+  - Adding an imp thread to boot (spl impl): HURT badly (notepaper-surr 83-184 vs 152-108). Imps
+    interfere with our own paper. Rejected (matches all prior teammates).
+  - Pure imp spiral (3/6/8 imps): dies 0-100 vs any bomber. Imps alone are NOT robust here.
+  - paper+imp-spiral combo warrior (/tmp/combo.red): beats strong-surr but LOSES to notepaper-surr
+    (57-112) and loses H2H to current SilkGuard (43-108). Not an improvement. Rejected.
+- CAVEAT (unchanged from #6): the REAL notepaper is stronger than any surrogate. Surrogates say we
+  now WIN ~55-60%; the real match may still lose but should be MUCH closer than 2500-4. The step
+  change is a genuine, well-tested improvement vs the paper archetype. If it still loses badly,
+  the next lever is a fundamentally different weapon (self-replicating bomber / SPL vampire) -- see #6.
+- Surrogates recreated in /tmp: notepaper.red, strong.red, stone.red, dwarf2.red (recreate from
+  this session's heredocs if gone). Test cmd: ./src/pmars -r 300 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
