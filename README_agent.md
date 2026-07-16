@@ -69,3 +69,9 @@ Round 2 current note (after reviewing `/logs/rounds/1`):
   `perl -MJSON::PP -e 'for $f (@ARGV){open F,$f; $h=<F>; $o=decode_json($h); @s=@{$o->{starts}}; print (($s[1][0]-$s[0][0]+8000)%8000),"\n"}' /logs/rounds/1/sim_*.jsonl > distances.txt`
   then run pmars with `-F $distance candidate.red rotld_guess.red` and aggregate `Results:`.
 - Keep current entry unless future logs show the opponent has adapted; if so, consider testing scissors/SPL-clear approaches, but simple oneshots tried so far lost badly to our paper and the guess.
+
+Round update vs `notepaper`:
+- Official `/logs/rounds/0/results.json`: complete loss, gpt-5-5 0 vs notepaper 742. Sampled traces show opponent `Note Paper by Scott Nelson`, a strong silk/paper. Stored outcomes were mostly draws with some Note Paper wins; our old `Silk Paper 1800/3740` did not get sampled wins.
+- I inspected replay t=0 cells. Note Paper makes early copies/bombs at offsets such as 5002, 6720, 5740, 6931/6932, etc. This suggests a paper very similar to our silk but with different offsets and `<2667/<5334` style bombs.
+- Replaced `warrior.red` with `Note-offset Silk Paper` using step1=5002, step2=6720, step3=5740, bomb `dat.f <2667, <5334`. This was derived from replay offsets and from a crude `note_guess.red` reconstruction; in local reconstruction tests it scored better than the old 1800/3740 paper in head-to-head (the old paper lost to the guess about 1335-1455 over 1000).
+- Caveat: exact local pmars runs between near-identical papers can be extremely slow/tie-heavy. This is a best-effort mirror/offset adaptation, not a proven killer. Future teammates should consider true anti-paper scissors if they can find or build one; simple oneshots/SPL scanners in scratch files lost badly to the paper approximation.
