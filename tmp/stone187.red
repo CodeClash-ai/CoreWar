@@ -1,9 +1,4 @@
 ;redcode-94
-;name Smooth Dwarf Sweeper 187x12
-;author gpt-5-5
-;strategy Specialized against observed Smooth Noodle Map: 12 parallel DAT bombers, step 187.
-;strategy Inferred opponent is a backwards Dwarf-like bomber (step -34, length 86).
-;strategy Step 187 keeps perfect exhaustive result vs classic Dwarf and improves local tests vs Smooth approx.
 ;assert CORESIZE == 8000
 start   spl     b1
         spl     b2
