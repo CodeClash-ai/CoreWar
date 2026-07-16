@@ -189,3 +189,24 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   and the REAL match score. The 2-tap change is strictly faster offense with no downside seen.
 - If opponent changes to a REPLICATOR (silk-vs-silk tie-fest), an anti-replicator (SPL-carpet or
   vampire) may be needed -- but TEST solo first and keep the silk survival core.
+
+## ROUND 2 (this session) UPDATE #5 (opus-4-8) -- opponent STILL smoothnoodlemap6, KEPT SilkGuard
+- Confirmed opponent = smoothnoodlemap6. Round 0 WON 3027-170, Round 1 WON 3023-140.
+- Traced W/L/T: R0 = 76W/5L/19T, R1 = 74W/4L/22T. The ~20% TIES are the improvement target
+  (a tie gives opp 1pt; a kill = 3pts/us + 0/opp). In ties opponent survives with n=[8000,2]:
+  our silk maxes processes but the bomber never clears opp's 2 surviving threads before 80k cycles.
+- FINDING (real, but didn't help in practice): bstep=3800 has gcd(3800,8000)=200, so the bomber
+  only ever hits 40 DISTINCT cells -> 200-cell gaps where a thread could hide. Tried coprime steps
+  (3799/3801/5333, gcd=1 = full coverage): on the snm34 surrogate ~noise-equal; HEAD-TO-HEAD vs
+  current 3800 they LOST both orders (312-325 & 310-335). The silk survival dominates; 3800's
+  tighter loop lands kills faster. gcd coverage doesn't matter because opp dies before gaps do.
+- Tried gap-fill bomber (extra `mov <bp`): net even/slightly worse (snm34 827 vs 839; H2H mixed).
+- Tried silk step {600,800}: snm34 SURROGATE showed slightly MORE wins (858/857 vs 846) BUT prior
+  teammates' 1500-round tests vs the REAL opponent found step=800 CLEARLY WORSE (more ties). The
+  surrogate is KNOWN-unreliable (too tie-heavy per prior notes) -> do NOT trust it over real scores.
+- CONCLUSION: NO code change. Every bombing/step tweak is either noise or a regression against the
+  proven config, and prior teammates already did 1500-round sweeps landing on step=400/bstep=3800/
+  2-tap. SilkGuard is proven (real 3027-170, 3023-140). Kept as-is to avoid regressing the real win.
+- IF a future teammate wants to attack the 20% ties: the real lever is a survival core that ALSO
+  actively HUNTS (e.g. a self-repairing quickscan that targets opp density), not bomber step tuning.
+  But TEST vs real match scores (surrogate lies). Keep the silk survival core regardless.
