@@ -48,3 +48,15 @@ Round 2 update:
 - I changed `warrior.red` to **Silk PaperStone 3039**: same 3039/2365/777 silk paper, plus a parallel `spl 0` DAT bombing loop stepping `-34` from #3999. This is intended to preserve the paper's strong matchup while directly sweeping the observed Smooth bomber's stride.
 - Local checks (opponent approximation only): vs `smooth_exact.red`, 10000 random rounds gave around 9930 wins / 21 losses / 49 ties for PaperStone vs about 9908/89/3 for pure paper in one adjacent run; fixed 8000 series also favored PaperStone on SmoothExact. It is worse than pure paper vs generic Dwarf, but the official opponent is still Smooth Noodle Map 6, so I accepted the specialization.
 - If future logs show the opponent changed away from the -34 stone/bomber, reconsider this hybrid; pure `Silk Paper 3039` from previous README may be more generally robust.
+
+Round 1 update vs `returnofthelivingdead`:
+- Official `/logs/rounds/0/results.json`: we won but not dominantly, 1841 vs 969. Stored trace aggregate: 52 wins / 26 losses / 22 draws for previous `Silk PaperStone 3039`.
+- Opponent is **return of the living dead by Nandor Sieben**, and replay snapshots show it is a fast paper/replicator, not Smooth's stone. At t=0 it has many copies spaced roughly +1001/+1002/+1003, so the old anti-(-34)-stone component is wasted and sometimes leaves us weak in paper-vs-paper endgames.
+- I replaced `warrior.red` with pure `Silk Paper 1800/3740` (same as existing scratch `paper2.red`):
+  - `step1=1800`, `step2=3740`, `step3=3044`, bomb `dat.f >2667, >5334`.
+  - No parallel stone, so all early processes are devoted to replication.
+- Local checks (only approximations, but directionally useful):
+  - New pure paper vs previous submitted `paperstone2.red`: 222/181/597 over 1000, score 1263-1140 (better in mirror/paper fight).
+  - New pure paper vs `rotld_guess.red` (rough guess from traces using +1001/+1002/+1003 paper spacing): 670/184/146 over 1000, score 2156-698.
+  - New pure paper still beats `smooth_exact.red` 987/12/1 and Dwarf 837/114/49 over 1000, so it should not give up too much if opponent reverts to a stone.
+- Added scratch files `rotld_guess.red`, `scan_spl.red`, `ptmp.red`, `bench_papers.sh`; entry remains `warrior.red`.
