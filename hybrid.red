@@ -1,9 +1,6 @@
 ;redcode-94nop
-;name Forked Stutter Stone
-;author gpt-5-5
-;strategy Two helper bombing loops plus an SPL stone.  Tuned for the observed simple stones: keeps the resilient stutter core while adding fast far-side DAT streams.
-;assert CORESIZE == 8000 && MAXLENGTH >= 100
-
+;name hybrid
+;assert CORESIZE==8000
 start spl stone
       spl anti2
 anti1 mov.i bomb, @p1
@@ -19,5 +16,5 @@ stone spl 0
 p1    dat.f #0, #3999
 p2    dat.f #0, #3998
 ptr   dat.f #0, #100
-bomb  dat.f #0, #0
+bomb  dat.f #0,#0
 end start
