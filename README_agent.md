@@ -1,37 +1,27 @@
 # Agent notes for CoreWar bot
 
-Current `warrior.red` is **Linear Exterminator**, a compact linear `jmz.f` scanner.
-It is intentionally simple and has scored perfectly against the observed opponent in both completed rounds.
+Round 0 logs show the active opponent is **Dwarf by A. K. Dewdney**, not Validate. The previous `Linear Exterminator` scanner lost badly to Dwarf because Dwarf bombs every 4 cells and kills the scanner before it completes a linear search.
 
-## Observed round history
+I replaced `warrior.red` with **Stutter Stone**, a tiny SPL stone:
 
-Available logs at this handoff:
-
-- `/logs/rounds/0/results.json`: `gpt-5-5` beat `validate` 4000-0. Saved traces/logs name the opponent as `Validate 1.1R by Stefan Strack`.
-- `/logs/rounds/1/results.json`: `gpt-5-5` beat `validate` 4000-0 again.
-
-Local validation in round 2:
-
-```sh
-./src/pmars -@ config/94nop.opt -b -r 200 warrior.red doc/examples/validate.red
-# Linear Exterminator scores 600, Validate scores 0, Results: 200 0 0
-
-./src/pmars -@ config/94nop.opt -b -r 200 doc/examples/validate.red warrior.red
-# Validate scores 0, Linear Exterminator scores 600, Results: 0 200 0
+```redcode
+start spl 0
+      mov.i bomb, @ptr
+      add.ab #3, ptr
+      jmp -2
+ptr   dat.f #0, #100
+bomb  dat.f #0, #0
 ```
 
-Both commands produced 200/200 wins for our warrior (no losses or ties), independent of warrior order.
+Why this version:
 
-## How the bot works
+- It rapidly creates many processes (`spl 0`), so a single Dwarf bomb rarely kills it.
+- It bombs every 3 cells, which is coprime to Dwarf's 4-cell bombing pattern and did best in quick local sweeps.
+- Local tests with `./src/pmars -@ config/94nop.opt -b -r 1000`:
+  - `stone3.red` vs `doc/examples/dwarf.red`: `Results: 669 18 313`, score 2320-367 for us.
+  - opponent order reversed: Dwarf wins 19, Stutter Stone wins 678, ties 303; score 2337-360 for us.
+- This is a major improvement over the old scanner, which scored roughly 1074-2926 in the official round-0 result and locally loses about 134-366 over 500 rounds.
 
-- Scans core one cell at a time from offset 100 using `jmz.f` so it does not skip stationary code.
-- When it finds a non-empty instruction, it backs up 15 cells and overwrites 35 consecutive cells with `DAT 0,0`.
-- Then it resumes scanning in case the enemy has surviving processes/code.
+Caveat: this stone is specialized for Dwarf. It loses to Validate in local tests (164-336 over 500), but the only official result currently available is Dwarf. If future logs show Validate or another stationary long warrior, consider reverting to the old linear `jmz.f` scanner or developing a P-space/selector (if rules allow; config is `94nop` with P-space size 1, so no useful P-space memory).
 
-This is well-suited to the bundled `Validate 1.1R` opponent, which is stationary and long enough that the 35-cell wipe after a hit reliably kills it.
-
-## Recommendation for next teammate
-
-If the opponent remains `Validate 1.1R`, keep `warrior.red` unchanged: it already gives the maximum possible match result in local tests and in rounds 0 and 1.
-
-If future logs show a different active opponent (bomber/stone/paper/replicator), this warrior is not a general-purpose hill warrior. Consider replacing it with a more robust stone/paper/scanner or a p-space strategy selector, and test against reconstructed opponents from the saved `sim_*.jsonl` traces.
+Files left from experiments (`stone3.red`, `cand.red`, `oneshot.red`, etc.) are just scratch warriors. The submitted entry remains `warrior.red`.
