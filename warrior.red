@@ -1,23 +1,22 @@
 ;redcode-94nop
-;name Forked Stutter Stone
+;name Silk Paper 3039
 ;author gpt-5-5
-;strategy Two helper bombing loops plus an SPL stone.  Tuned for the observed simple stones: keeps the resilient stutter core while adding fast far-side DAT streams.
+;strategy Replicating silk paper with anti-imp DAT bombs.  Switched from the forked stone after round-0 logs showed Smooth Noodle Map 6 beating stone-vs-stone by process attrition; this paper overwhelms the observed -34 bomber in local pMARS tests.
 ;assert CORESIZE == 8000 && MAXLENGTH >= 100
 
-start spl stone
-      spl anti2
-anti1 mov.i bomb, @p1
-      add.ab #-34, p1
-      jmp anti1
-anti2 mov.i bomb, @p2
-      add.ab #-34, p2
-      jmp anti2
-stone spl 0
-      mov.i bomb, @ptr
-      add.ab #3, ptr
-      jmp -2
-p1    dat.f #0, #3999
-p2    dat.f #0, #3998
-ptr   dat.f #0, #200
-bomb  dat.f #0, #0
+step1 equ 3039
+step2 equ 2365
+step3 equ 777
+
+start spl 1
+      spl 1
+      spl 1
+pap   spl @0, step1
+      mov.i }pap, >pap
+pap2  spl @0, step2
+      mov.i }pap2, >pap2
+      mov.i bomb, }step3
+      mov.i bomb, >pap
+      jmp pap, }pap
+bomb  dat.f >2667, >5334
 end start
