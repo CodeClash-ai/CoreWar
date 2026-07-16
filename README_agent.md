@@ -799,3 +799,112 @@ Final verification of the shipped file:
    `/tmp/gen2.sh` (5-process variant generator) used this session do
    NOT persist -- recreate from this file's description or from
    `git show` on this commit's diff if you want them again.
+
+# Round update (sonnet-5, this session -- real game round numbering, fresh session)
+
+## Context
+Only `/logs/rounds/0` available this session. Real result: **winner
+sonnet-5**, score **sonnet-5 2577 vs smoothnoodlemap6 524** (~83% share
+by score). `trace.md` (100 traced battles): sonnet-5 won 61, opponent
+won 18, **21 ties** (ties happen when neither side is eliminated by the
+80000-cycle limit -- confirmed by checking raw `sim_*.jsonl`: tied
+battles run the full `t` up to ~159000-160000, i.e. pmars's half-cycle
+counter hitting `2*cycles`).
+
+Key new data point vs all prior sessions' opponents ("dwarf",
+"validate", "smoothnoodlemap" round 0/1 which behaved like classic
+single-process Dwarf): **this round's opponent ("smoothnoodlemap6") is
+a much bigger, higher-process warrior** -- `trace.md` summary line:
+avg peak procs **62.2** (vs our own steady 4.0), avg core owned only
+6.4% (vs our 38.2%), eliminated 61/100 times (vs us being eliminated
+18/100 times). So the opponent is some kind of wide replicator/spawner
+that fills lots of processes but doesn't hold much core, quite unlike
+the `dwarf.red`-shaped opponents all previous tuning sessions optimized
+against. Despite the mismatch with our tuning reference, we still won
+solidly (61 vs 18, plus 21 ties) -- our blind carpet-sweep design
+apparently generalizes reasonably well to this opponent shape too, it's
+just not as lopsided a win as the ~70% we get vs `dwarf.red` locally.
+
+## What I did this session
+1. Re-verified `warrior.red` (unchanged from last session: FAST=16,
+   THIRD=-4, FHALF=3000, HALF=7960, 1-slow+3-fast/4-process shape) is
+   still safe and performing as documented -- no regression:
+   - Assembles cleanly.
+   - `-f -r 3000` vs `doc/examples/dwarf.red`: 2118/3000 = 70.6% (0
+     ties) -- matches prior session's ~70% exactly.
+   - `-f -r 300` vs `doc/examples/validate.red`: 300/0/0.
+   - `-f -r 300` vs `test_opponents/imp.red`: 101 wins / 0 losses / 199
+     ties -- matches prior sessions' numbers (imp.red is a single mover
+     that our sweep never manages to definitively finish off within the
+     cycle limit if it keeps relocating, but we never lose to it
+     either).
+2. **Added `test_opponents/swarm.red`**: a new *synthetic* high-
+   process-count test opponent (repeatedly `spl`s a fresh copy of its
+   own bombing loop so process count grows every iteration, each copy
+   also bombs forward by a fixed step) -- specifically built this
+   session to give future tuning sessions *something* locally testable
+   that's closer in shape (many processes, not a single Dwarf-style
+   bomber) to what this round's real opponent trace showed, since we
+   still don't have the real opponent's source. **Important caveat:
+   this is a crude, made-up stand-in, NOT a reconstruction of the real
+   opponent's actual strategy** -- I have no visibility into
+   smoothnoodlemap6's actual code, only the aggregate trace stats
+   (procs/core-owned/elimination counts). Treat any tuning conclusions
+   drawn from `swarm.red` with appropriate skepticism; it mainly tests
+   "does our design cope with an opponent that spams many processes",
+   not much else.
+   - Current `warrior.red` beats `swarm.red` cleanly: 500/0/0 (`-f -r
+     500`). So our design isn't inherently vulnerable to "opponent has
+     way more processes than us" in isolation -- MARS round-robins
+     cycles per-warrior (not globally across all processes of both
+     sides), so an opponent spawning hundreds of cheap processes mostly
+     just starves *their own* per-process throughput, it doesn't steal
+     our cycles. This is probably *part* of why we still win the
+     majority of real rounds against this bigger/spammier opponent
+     despite never having tuned against anything like it before.
+3. Did NOT make any change to `warrior.red` itself this session. Given
+   (a) the real result is already strongly positive (83% score share),
+   (b) many prior sessions' notes describe constant-tuning as heavily
+   diminishing-returns by now, and (c) I don't have the real opponent's
+   code to safely validate a *targeted* change against (only a
+   made-up, unverified `swarm.red` stand-in) -- risk of a real
+   regression from a blind tweak this session seemed to outweigh the
+   likely small upside. Prioritized leaving a clean, verified baseline
+   plus a slightly better testing tool for whoever tunes next, per the
+   "if winning, more testing/documentation may be higher value than
+   more tuning" guidance.
+
+## Ideas for next round
+1. **Investigate the 21 ties specifically** (higher priority than
+   general dwarf-matchup tuning at this point, since dwarf-matchup
+   constant tuning has been flat for 3+ sessions and ties are worth
+   only 1/3 of a win in the scoring formula `Score = Win%*3 + Draw%`,
+   so converting even a few ties to wins is worth more than a small
+   win-rate bump elsewhere). Ties = both warriors survive the full
+   80000-cycle limit. Look at whether our slow full-core sweep (step 1,
+   HALF=7960, one full lap ~7960 iterations *if it never gets its
+   pointer cell clobbered*) is simply too slow to ever reach a
+   thinly-spread, constantly-relocating swarm-type opponent within
+   80000 cycles -- if so, a faster guaranteed-coverage backstop (bigger
+   step with a coverage-completing residue-class rotation, or several
+   parallel slow sweeps each covering a fraction of core) might convert
+   some ties into wins without the process-count downsides earlier
+   sessions found from just adding more *fast* sweepers.
+2. `test_opponents/swarm.red` (this session) is a rough, made-up
+   stand-in, not real opponent code -- if a future session gets a
+   `trace.md` with more real ties/losses and recorded start offsets
+   (like round-1-session-2's `-F <offset>` methodology, see much
+   earlier notes above), prefer debugging directly against those real
+   recorded offsets/behavior over further tuning against synthetic
+   opponents.
+3. Standing ideas from every prior session, still untried: real
+   scanner (read-before-bomb) architecture; p-space (`ldp`/`stp`) to
+   shrink our in-core footprint. Both bigger rewrites that still
+   haven't found a session willing to risk the safe, working baseline
+   -- now 3+ real rounds of clean wins in a row (scores/results in
+   `/logs/rounds/*/results.json` if more accumulate) suggests the
+   current design is solid; any structural rewrite should be prototyped
+   and A/B'd very thoroughly (vs `dwarf.red` AND `swarm.red` AND
+   `imp.red` AND `validate.red`, all in `test_opponents/`+`doc/examples/`)
+   before replacing the shipped `warrior.red`, given how much safe value
+   is already banked.
