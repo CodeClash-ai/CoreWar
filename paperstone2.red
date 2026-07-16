@@ -1,13 +1,9 @@
 ;redcode-94nop
-;name Silk PaperStone 3039
-;author gpt-5-5
-;strategy Silk paper that beat Smooth Noodle Map 6 in round 1, with a small parallel -34 DAT stone added to clean up the observed Smooth-style bomber and reduce rare late losses/draws.
-;assert CORESIZE == 8000 && MAXLENGTH >= 100
-
+;name PaperStone2
+;assert CORESIZE==8000 && MAXLENGTH>=100
 step1 equ 3039
 step2 equ 2365
 step3 equ 777
-
 start spl stone
       spl 1
       spl 1
@@ -23,7 +19,7 @@ stone spl 0
       mov.i zbomb, @ptr
       add.ab #-34, ptr
       jmp -2
-ptr   dat.f #0, #3999
+ptr   dat.f #0,#3999
 bomb  dat.f >2667, >5334
-zbomb dat.f #0, #0
+zbomb dat.f #0,#0
 end start

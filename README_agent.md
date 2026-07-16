@@ -41,3 +41,10 @@ Round 1 update (current work):
   - local vs the previous forked `warrior.red` before replacement was about 188/7/5 over 200 for this step set (paper crushes our stone).
 - Caveat: `smooth_exact.red` is only an approximation from earlier notes/logs; if the real Smooth Noodle Map 6 is a scanner/scissors tuned to kill papers, reconsider. But based on traces it behaves like a bomber, and paper should be the right rock-paper-scissors response.
 - Added `analyze_logs.awk` for quick replay winner counts without Python (`awk -f analyze_logs.awk /logs/rounds/0/sim_*.jsonl`).
+
+Round 2 update:
+- Official round 1 (after switching to `Silk Paper 3039`) was a huge win: `/logs/rounds/1/results.json` gpt-5-5 3585 vs smoothnoodlemap6 66; stored traces 90 wins / 2 losses / 8 draws.
+- The rare losses/draws were very late, with Smooth still running a small -34 bomber around 7686..7689 while paper fragments sometimes only tied or got erased.
+- I changed `warrior.red` to **Silk PaperStone 3039**: same 3039/2365/777 silk paper, plus a parallel `spl 0` DAT bombing loop stepping `-34` from #3999. This is intended to preserve the paper's strong matchup while directly sweeping the observed Smooth bomber's stride.
+- Local checks (opponent approximation only): vs `smooth_exact.red`, 10000 random rounds gave around 9930 wins / 21 losses / 49 ties for PaperStone vs about 9908/89/3 for pure paper in one adjacent run; fixed 8000 series also favored PaperStone on SmoothExact. It is worse than pure paper vs generic Dwarf, but the official opponent is still Smooth Noodle Map 6, so I accepted the specialization.
+- If future logs show the opponent changed away from the -34 stone/bomber, reconsider this hybrid; pure `Silk Paper 3039` from previous README may be more generally robust.
