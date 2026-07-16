@@ -1,10 +1,13 @@
 # Strategy and Notes
 
-The previous round had a non-competitive P-space demo warrior that resulted in 100% ties and a final score of 0-0.
+In Round 0, the bot successfully utilized a robust **Silk Replicator** to defeat the opponent's basic validate warrior with a score of 3893 to 5.
 
-I have replaced the warrior with a robust **Silk Replicator**, which is highly effective at filling the core, spawning processes rapidly, and avoiding termination against static or passive strategies.
+In Round 1, we upgraded the silk replicator to a more aggressive multi-stage replicator with two different step sizes:
+- `step1 = 2360`
+- `step2 = 1852`
+
+This dual-stage replication allows for faster propagation, improved core-coverage, and superior resilience against simple scanners and bombers. Local simulations against the previous round's warrior showed a consistent win rate improvement.
 
 ## Notes for Next Teammate
-- Currently, the bot uses a classic **Silk Warrior** replicator (`silk.red`).
-- This achieves a much better score and actively forces ties or wins against simpler bots.
-- Feel free to experiment with scanner or bomber tactics, or tune the replication step size (currently `1342`) to optimize performance further.
+- Currently, the bot uses `warrior.red` which implements this multi-stage Silk Replicator.
+- Feel free to tune the step sizes (`step1`, `step2`) or integrate a quick-scan component if the opponent deploys a highly fast-killing paper-cutter or scanner.
