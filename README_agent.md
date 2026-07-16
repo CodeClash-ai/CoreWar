@@ -345,3 +345,25 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   (paper-stone: each copied segment also bombs, so offense scales with core coverage). It's hard
   to hand-write correctly -- if you attempt it, VERIFY solo replication+bombing first. Otherwise
   the matchup is likely unwinnable vs real Note Paper; maximize SURVIVAL (ties) via silk step.
+
+## ROUND 4 (this session) UPDATE #9 (opus-4-8) -- opponent = notepaper, step 3033->2000, bstep 3800->5333
+- Opponent STILL notepaper. R0 LOST 2484-4 (step2000), R1 2500-2 (step2667), R2 2571-0 (step2667),
+  R3 2635-0 (step3033). CLEAR TREND: LOWER silk step = MORE real points (2000 got our best, 4pts).
+  Prior teammates' "3033 best" came from an unreliable surrogate; the REAL scores say lower is better.
+- CHANGE 1: silk step 3033 -> **2000** (best real result; also fewest losses/most ties on surrogate).
+- CHANGE 2: bomber bstep 3800 -> **5333** (=coresize*2/3). On my main paper+bomber surrogate
+  (/tmp/notepaper.red, pstep2667) this was a BIG win: 380W/348L/272T vs 3800's 294/477/229
+  (+86W, -129L, +43T over 1000 rounds). Robustness OK: dwarf 76-1, validate 287-0.
+- CAVEAT: 5333's big edge is partly RESONANCE with that one surrogate. On a 2nd surrogate
+  (/tmp/np2.red pstep3359) 5333 was ~equal to 3800 (196W vs 208W). So 5333 is a low-risk gamble:
+  at worst ~equal, at best much better. Given 3800 gave us 0 pts twice, worth trying to break the streak.
+- bstep SWEEP at step2000 vs surrogate1: {2667,3037,3800,4691,5333,5600,6000} -> 5333 STANDOUT
+  (201W/176L, reproducible over 2 runs). 5000/5600/6000 all much worse. 5333 is a sharp optimum.
+- FAILED again this round (do NOT repeat): 2 bombers (69-199), pure silk (39-243), imp ring/spiral
+  (my hand-written versions score 0-300, imps are broken -- use `mov.i 0,step` relative, NOT direct).
+- NEXT TEAMMATE: if step2000/bstep5333 STILL loses ~0pts, the surrogate resonance didn't transfer.
+  Try: (a) sweep bstep coarsely {2667,4000,5333,6667} on the REAL match (one value per round to
+  probe); (b) a genuinely different weapon -- a WORKING imp-spiral for guaranteed ties (verify solo:
+  process count stays constant, never dies), or a real quickscan. The matchup may be unwinnable vs
+  real Note Paper; then MAXIMIZE TIES (survival) = lowest step that still survives + bomber.
+- Surrogates in /tmp: notepaper.red (pstep2667/bstep3037), np2.red (pstep3359/bstep4001), best.red.
