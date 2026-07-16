@@ -187,3 +187,75 @@ cosmetic:
    code -- I checked, it's just a mirror of our own team's history
    (same TwinSweep commits appear there under a "pspace" label). Don't
    waste time trying to read opponent strategy from it.
+
+# Round 1 update (sonnet-5, this session)
+
+## Context
+Only `/logs/rounds/0` was available this session (score: sonnet-5 4000,
+opponent "validate" 0 -- turned out to be the ships-with-pmars
+`doc/examples/validate.red` ICWS88 compliance-test warrior, a
+near-passive single-process program; we killed it 100/100 in the traced
+sample). No log data yet on a "real" adversarial opponent's strategy --
+treat that clean sweep as encouraging but not diagnostic.
+
+## What I did
+Took the previous round's open item ("~50-52% vs classic Dwarf, not a
+clear favorite") and ran a process-allocation experiment instead of more
+step-size tuning (which earlier agents had already grid-searched
+thoroughly for the divisor-safety rule -- see round-2 notes above, still
+correct and unchanged: FAST must divide 8000).
+
+Tried these process-count/allocation variants (all step sizes/margins
+otherwise same as the FAST=16 baseline), each checked for (a) 100/100
+safety vs an inert `jmp start` loop and (b) win rate vs
+`doc/examples/dwarf.red` over 300-500 rounds:
+- Baseline (2 slow + 2 fast = 4 procs, the shipped round-2 warrior):
+  ~50-53% vs Dwarf (252/500, 158/300 in two separate runs).
+- 2 procs, slow-only (both directions, no fast sweepers): ~40% vs Dwarf
+  (120/300) -- confirms fast sweepers matter a lot, not just coverage.
+- 6 procs (2 slow + 2 fast@16 + 2 fast@64): ~45% vs Dwarf (135/300) --
+  *worse* than the 4-proc baseline. More processes dilutes the shared
+  cycle budget faster than the extra coverage helps.
+- 3 procs (2 slow + 1 fast, dropping one fast direction): ~54% vs Dwarf
+  (272/500) -- slightly better than baseline.
+- **3 procs (1 slow forward-only, full HALF=core-margin, + 2 fast in
+  opposite directions): ~54-62% vs Dwarf across three separate 500-round
+  runs (308/500, 287/500, 271/500) -- clearly the best variant found,
+  and the one now shipped as `warrior.red`.** Rationale: the fast
+  sweepers are what actually race and beat a small fast opponent like
+  Dwarf; giving them 2 of the 3 total processes (instead of splitting
+  evenly 2 slow/2 fast) means they get a much bigger share of the cycle
+  budget MARS round-robins across active processes, at the cost of the
+  full-coverage guarantee taking ~2x longer in wall-clock cycles (now
+  one process sweeping ~7960 cells instead of two processes each
+  sweeping ~3990) -- but that backstop kill was rarely the deciding
+  factor anyway; the earlier fast-vs-fast race was.
+  Verified this final version: still 100/100 safe vs inert loop, still
+  100/100 vs `validate.red`, and 271-308/500 (54-62%) vs Dwarf across
+  reruns (noisy but consistently >50%, unlike the old baseline's
+  ~50-52% which was sometimes *below* 50%).
+
+## Ideas for next round (didn't have step budget to try these myself)
+1. This round only tuned *process count/allocation*, not step sizes,
+   for the new 1-slow/2-fast shape. Worth re-running the FAST/FHALF
+   grid search (per round-2 notes) specifically for this shape --
+   might shift the optimum since the cycle-budget-per-process changed.
+2. Still just one real reference opponent (`dwarf.red`) to test against.
+   Building small reference imp-ring / replicator / basic-scanner
+   opponents under `test_opponents/` (suggested 2 rounds running now)
+   would help derisk future tuning -- if the real opponent this round
+   turns out to be scanner-based rather than bomber-based, our whole
+   sweep-based design might behave very differently and none of this
+   round's Dwarf-based tuning would transfer.
+3. Consider a real p-space or core-clear "stone" defense, or process
+   self-check/re-copy (see round-1 idea #4 above), since we still have
+   0 defensive mechanism against getting sniped early by a fast
+   scanner-bomber -- untested this round, no reference scanner opponent
+   available locally to check against.
+4. Note for whoever tunes next: /tmp files from this session
+   (`/tmp/baseline.red`, `/tmp/v4_3proc.red`, `/tmp/v5_1slow2fast.red`,
+   `/tmp/inert.red`) will NOT persist to your session (fresh shell each
+   round) -- recreate the inert-loop sanity check file if you want it
+   (see round-1 notes above for the one-liner), and recreate any
+   baseline you want to diff against from git history
+   (`git log -- warrior.red`) instead of /tmp.
