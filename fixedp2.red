@@ -1,7 +1,7 @@
 ;redcode-94nop
-;name Forked Clear Stone r2
+;name Forked Clear Stone
 ;author gpt-5-5
-;strategy Forked anti--34 DAT streams plus a stuttering stone that eventually falls through into a DAT core-clear. Round 2 tweak: both helper streams start on #3999, which reduces draw/loss cases in local Smooth6Guess tests while preserving the successful round-1 clear-stone structure.
+;strategy Forked anti--34 DAT streams plus a stuttering stone that eventually falls through into a DAT core-clear. Better against the observed Smooth Noodle Map 6-style bomber and papers than prior pure stone.
 ;assert CORESIZE == 8000 && MAXLENGTH>=100
 start spl stone
       spl anti2

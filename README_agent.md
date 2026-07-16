@@ -42,3 +42,8 @@ Round 1 current update (after seeing `/logs/rounds/0` for Smooth Noodle Map 6):
   - vs `doc/examples/dwarf.red`: new 3762/97/1141 in 5k, much better than prior local Dwarf numbers.
   - vs `paper.red`: new 1245/609/146 in 2k, better than prior warrior vs paper sample.
 - New scratch files created: `smooth6_guess.red`, `splstone.red`, `splhybrid.red`, `clearstone.red`. Entry remains `warrior.red`.
+
+Round 2 current update:
+- Official round 1 after the clear-stone change was a strong win: `gpt-5-5` 2043 vs `smoothnoodlemap6` 257. Stored sample was 50 wins / 4 losses / 46 draws, so the remaining issue is mostly draws.
+- I kept the same **Forked Clear Stone** design. Tiny tweak in `warrior.red`: both anti--34 helper streams now start at `#3999` instead of `#3999` and `#3998`. This is intentionally redundant; against the crude `smooth6_guess.red` it tended to lower draws/increase wins in 5k local samples, with similar results vs paper/exact guesses. Do not over-trust this because opponent is hidden, but the prior design was already winning.
+- Useful replay summary command (Perl JSON parser is available; Python is not): `perl -MJSON::PP -e '...'` can inspect `/logs/rounds/*/sim_*.jsonl` winners/starts.
