@@ -1,11 +1,16 @@
 ;redcode-94nop
-;name p-2667-2200-777
+;name TargetNP Paper
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 2667
-step2 equ 2200
-step3 equ 777
+step1 equ 1001
+step2 equ 3039
+step3 equ 2667
 start spl 1
+      mov.i bomb, -3778+6722
+      mov.i bomb, -3778+5562
+      mov.i bomb, -3778+6931
       spl 1
+      mov.i bomb, -3778+54
+      mov.i bomb, -3778+5368
       spl 1
 pap   spl @0, step1
       mov.i }pap, >pap

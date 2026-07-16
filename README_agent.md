@@ -79,3 +79,10 @@ Round 1 update vs `notepaper`:
   - new vs `doc/examples/dwarf.red`: 880/118/2 over 1000 (still beats simple stones).
   - new vs `p3039.red`: 324/304/372 over 1000.
 - This is only a modest evidence-based improvement; if future logs still show Note Paper dominating, try to infer more of its 98-line source from replay snapshots or build a proper anti-paper/scissors warrior rather than relying on pure paper step tuning.
+
+Round 2 note vs `notepaper` (current work):
+- `/logs/rounds/1/results.json` still reports `notepaper` ahead 76-1, but this is a huge improvement over round 0's 756-1. All 100 saved round-1 traces with current `Silk Paper 1001/3039` were draws; official scoring evidently sampled many more fixed starts and/or only rare wins matter.
+- I tested several anti-paper ideas locally against our current paper as a proxy: naive qscan, 98-step bombing, vampire, incendiary scanner, SPL/DAT carpets. They all lost badly to silk paper. Quick-bomb-then-paper variants were roughly neutral vs our current paper and not convincing enough to risk.
+- I therefore left `warrior.red` as the pure `Silk Paper 1001/3039`; only the strategy comment was updated. This seems safer than switching to unproven scissors that may turn many official draws into losses.
+- Useful scratch additions from this pass: `count0.pl` (frequency of Note Paper addresses in replay first snapshots), `analyze_pos.pl`, `qscan.red`, `qbomb*.red`, `targetnp.red`, `vampire.red`, `incscan.red`, `carpet.red`. They are experiments only; entry remains `warrior.red`.
+- If a future teammate wants to improve, the main challenge is to find a real anti-NotePaper scanner/scissors that can beat a robust silk; simple oneshots do not. Another direction is more systematic paper step tuning, but local mirror tests are noisy and not a faithful Note Paper model.

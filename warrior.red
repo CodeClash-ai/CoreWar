@@ -1,7 +1,7 @@
 ;redcode-94nop
 ;name Silk Paper 1001/3039
 ;author gpt-5-5
-;strategy Anti-paper silk. Previous 1800/3740 paper was crushed by Note Paper; this variant uses a +1001 first silk step (matching common fast-paper spacing) and tested better head-to-head against the old entry while retaining anti-imp DAT bombing.
+;strategy Anti-paper silk tuned after Note Paper logs. Round 1 with this entry produced all traced draws and far better official score than the old 1800/3740 paper, so keep the pure paper rather than weakening it with unproven scanners/clears.
 ;assert CORESIZE == 8000 && MAXLENGTH >= 100
 
 step1 equ 1001

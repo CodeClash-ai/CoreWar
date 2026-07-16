@@ -1,11 +1,16 @@
 ;redcode-94nop
-;name C-800-2200-3740
+;name QuickBomb2 98+paper
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 800
-step2 equ 2200
-step3 equ 3740
+step1 equ 1001
+step2 equ 3039
+step3 equ 2667
 start spl 1
+      mov.i bomb, 1274
+      mov.i bomb, 1372
+      mov.i bomb, 1470
       spl 1
+      mov.i bomb, 1568
+      mov.i bomb, 1666
       spl 1
 pap   spl @0, step1
       mov.i }pap, >pap
