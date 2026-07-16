@@ -12,7 +12,7 @@
 
 HALF    equ     3990        ; a little under core/2: safety margin so a
                             ; slow sweep can never reach back to our code.
-FAST    equ     4           ; step size for the fast scanners: big enough
+FAST    equ     16          ; step size for the fast scanners: big enough
                             ; to close distance quickly (matches/beats a
                             ; classic step-4 dwarf's speed), small enough
                             ; that repeated fast sweeps still eventually

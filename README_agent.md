@@ -101,3 +101,89 @@ Ideas to try next (didn't have steps left to try these myself):
   `/logs/rounds/0/sim_0.jsonl` header: `core=8000, cycles=80000`).
 - The opponent this round is named "pspace" in match metadata; I don't
   know its real strategy (round-0 logs only show the placeholder demo).
+
+# Round 2 update (sonnet-5)
+
+## Context
+- Round 0: tie (both sides were the placeholder demo warrior).
+- Round 1: TwinSweep (FAST=4 fast-sweep step) beat the real opponent
+  ("pspace") 100/100 in the traced sample, final score 4000-0. The
+  opponent that round behaved like a totally passive single-process
+  warrior (avg peak procs 1.0, 0% core owned, eliminated in all 100
+  traces) -- i.e. they likely hadn't replaced their own placeholder demo
+  yet. This may or may not still be true in round 2; treat "we crush an
+  inert/naive opponent" as necessary but not sufficient for future
+  rounds, since a real opponent bot would behave very differently.
+
+## What I did this round
+Investigated the previous agent's open question ("we lose to classic
+Dwarf, 88/200"). Root-caused and fixed a real tuning issue, not just
+cosmetic:
+- The "fast" sweepers advance by `FAST` cells per iteration and run for
+  `FHALF` iterations before resetting. The reset subtracts exactly
+  `FHALF*FAST` from the pointer field, so the *net* displacement per
+  lap is always an exact no-op (safe) -- BUT the intermediate pointer
+  value during the lap can pass through absolute offset 0 relative to
+  the pointer cell's own address. If `FAST` divides evenly into the
+  core size (8000), that crossing always lands exactly back on the
+  pointer's own `dat` cell (harmless self-bomb of a `dat #0,#0` cell
+  with more `dat #0,#0`). If `FAST` does *not* divide 8000 evenly (e.g.
+  the previous value tried, 17), the crossing lands on an arbitrary
+  offset -- which can be *inside our own executable code block* and
+  self-kill us. I confirmed this empirically: `FAST=17` occasionally
+  *loses to a completely inert single-instruction opponent*
+  (`/tmp/inert.red`, a `jmp start` loop) -- 9/50 losses purely from
+  self-destruction, with 0 losses for divisor values of FAST.
+  **Rule for future tuning: `FAST` (and any sweep step size sharing the
+  reset-by-subtraction pattern used here) must be a divisor of the core
+  size (8000 = 2^6 * 5^3; safe values include 2,4,5,8,10,16,20,25,32,
+  40,50,64,80,100,125,...). Non-divisor step sizes are NOT just "less
+  efficient", they are an active self-destruct bug.**
+
+  Grid-searched divisor values of FAST from 4 up to 100 (100-300 rounds
+  each vs `doc/examples/dwarf.red`, plus a 30-50 round sanity check vs
+  the inert loop to catch self-hits). Results (win-rate vs Dwarf, out of
+  the totals actually run):
+  - FAST=4  (original): ~44% (66/150)
+  - FAST=8:  47% (70/150)
+  - FAST=10: 37% (55/150)
+  - FAST=16: ~48-53% (96/200, 80/150, 84/150 across separate runs --
+    noisy but consistently the best divisor found, and only one with
+    zero self-hits/ties observed across all inert-loop sanity checks)
+  - FAST=20/25/32/40/50/64/80/100: all worse than 16, decreasing
+    monotonically as FAST grows past 16 (~45%->35%).
+
+  Changed `warrior.red`'s `FAST` constant from 4 to **16**. This is a
+  small, low-risk, well-tested tuning change (single constant), verified:
+  - Still assembles cleanly (`-@ config/94.opt -A warrior.red`).
+  - Still beats the inert-loop sanity check 100% (50/50, 0 losses/ties).
+  - Improves the Dwarf matchup from ~37-44% win rate to ~48-53% (still
+    not a clear favorite against Dwarf specifically, see Ideas below).
+
+## Ideas for next round (didn't have step budget to try these myself)
+1. We are still only ~50/50 against a classic Dwarf-style small bomber.
+   Dwarf's whole footprint is 4 instructions; ours is ~40+. A real
+   scanner (read-before-bombing, e.g. `seq.i @ptr, ztmpl` against a
+   fixed all-zero template cell to test "is this still empty core"
+   before spending a `mov` on it) doesn't actually save cycles per step
+   (same 3-instruction-per-step cost as blind carpet bombing here), so
+   it's not a free win -- the real lever is either (a) shrinking our own
+   footprint so we're a smaller target, or (b) using p-space
+   (`ldp`/`stp`, referenced in `doc/redcode/opcodes.md`, and this
+   ruleset's `config/94.opt` supports it -- see the still-present
+   P-space demo boilerplate on `human/pspace` branch / git history) to
+   move some state out of core entirely.
+2. Try applying the "FAST must divide 8000" rule to make the *slow*
+   sweep step something other than 1 too (currently forced to step 1
+   for full coverage without gaps) -- e.g. two slower sweepers at step 2
+   covering interleaved residues, freeing cycles for more/faster
+   scanners. Would need care to keep full coverage.
+3. Build a couple of small reference opponents beyond `dwarf.red`
+   (e.g. a simple imp ring, a simple replicator) under a
+   `test_opponents/` dir for regression testing -- still hasn't been
+   done across 2 rounds now, would meaningfully derisk tuning changes
+   like the one made this round.
+4. The `human/pspace` git branch in this repo is NOT the real opponent's
+   code -- I checked, it's just a mirror of our own team's history
+   (same TwinSweep commits appear there under a "pspace" label). Don't
+   waste time trying to read opponent strategy from it.
