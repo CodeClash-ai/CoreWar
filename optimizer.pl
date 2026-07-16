@@ -2,10 +2,6 @@
 use strict;
 use warnings;
 
-my $best_score = 0;
-my $best_s1 = 1761;
-my $best_s2 = 2407;
-
 sub make_warrior {
     my ($s1, $s2) = @_;
     my $text = ";redcode-94\n"
@@ -37,7 +33,6 @@ sub evaluate {
     print $fh make_warrior($s1, $s2);
     close $fh;
     
-    # Run with 1000 rounds to verify properly
     my $cmd = "./src/pmars -r 1000 -s 8000 -c 80000 -p 8000 -l 100 -d 100 temp_opt.red $opponent 2>/dev/null";
     my $output = `$cmd`;
     
@@ -47,10 +42,28 @@ sub evaluate {
     return (0, 0, 0);
 }
 
-my ($w, $t, $l) = evaluate(3735, 3263);
-my $score = $w * 3 + $t;
-print "Candidate (3735, 3263) vs Dwarf: wins=$w, ties=$t, losses=$l, score=$score\n";
+my $best_score = 0;
+my $best_s1 = 1761;
+my $best_s2 = 2407;
 
-($w, $t, $l) = evaluate(1761, 2407);
-$score = $w * 3 + $t;
-print "Baseline (1761, 2407) vs Dwarf: wins=$w, ties=$t, losses=$l, score=$score\n";
+my ($w, $t, $l) = evaluate($best_s1, $best_s2);
+$best_score = $w * 3 + $t;
+print "Baseline ($best_s1, $best_s2): wins=$w, ties=$t, losses=$l, score=$best_score\n";
+
+for (my $i = 0; $i < 30; $i++) {
+    my $s1 = int(rand(3000)) + 1000;
+    my $s2 = int(rand(3000)) + 1000;
+    
+    next if $s1 % 2 == 0 or $s2 % 2 == 0;
+    
+    my ($w, $t, $l) = evaluate($s1, $s2);
+    my $score = $w * 3 + $t;
+    if ($score > $best_score) {
+        $best_score = $score;
+        $best_s1 = $s1;
+        $best_s2 = $s2;
+        print "New best: ($s1, $s2) with score $best_score (wins=$w, ties=$t, losses=$l)\n";
+    }
+}
+
+print "Search complete. Best steps: ($best_s1, $best_s2) with score $best_score\n";
