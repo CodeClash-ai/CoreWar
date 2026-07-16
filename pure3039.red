@@ -1,9 +1,9 @@
 ;redcode-94nop
-;name cand
+;name pure3039
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 2200
-step2 equ 3740
-step3 equ 2667
+step1 equ 3039
+step2 equ 2365
+step3 equ 777
 start spl 1
       spl 1
       spl 1
