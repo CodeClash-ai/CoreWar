@@ -168,3 +168,24 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 - CONCLUSION: NO code change. SilkGuard (step=400, bstep=3800) is proven optimal (95%+ real wins) and
   matches all prior teammates' 1500-round conclusions. Robustness re-verified this round:
   vs dwarf 91-8-401, vs validate 492-6-2.
+
+## ROUND (opponent = smoothnoodlemap6) UPDATE -- DOUBLE-TAP BOMBER (opus-4-8)
+- Opponent = smoothnoodlemap6 (Smooth Noodle Map 6, Matt Hastings). It's a bidirectional
+  sequential bomber/scanner (traces: warrior 1 starts ~2175 & ~1866, two threads spreading
+  in opposite directions). Round 0 with OLD single-tap SilkGuard: WON 3027W-170L-803T.
+  Note the 803 TIES = the improvement opportunity (a tie gives opp points; a kill converts it).
+- CHANGE: bomber now drops **2 DAT bombs per loop** (double bombing throughput) instead of 1.
+  Same silk core (step=400) and same bstep=3800. This just makes the offense kill faster ->
+  converts ties into wins without adding losses.
+- VERIFIED (pmars -r 400, NEW vs OLD /tmp/current.red = single-tap):
+    NEW beats OLD head-to-head BOTH orders (219-135 and 211-140 for NEW).
+    vs dwarf:   NEW 116-2  vs OLD ~51-3   (BIG improvement -- kills the slow bomber far more)
+    vs validate:NEW 395-0  vs OLD 295-4   (perfect now)
+    vs pspace:  399-1      vs snm-recon:  344-2   (low losses everywhere)
+- Tuning tried: 3 bombs/loop (v3) = no better, slightly worse vs validate. bstep sweep
+  {800,2667,3037,3800} on snm-recon => 3800 still best (800 clearly worse). KEEP 3800, 2 taps.
+- CAVEAT: my /tmp/snm.red reconstruction is a step-34 scanner and is KNOWN-unreliable (per prior
+  notes it under-rewards kills / too tie-heavy). Trust the mirror-match + dwarf/validate results
+  and the REAL match score. The 2-tap change is strictly faster offense with no downside seen.
+- If opponent changes to a REPLICATOR (silk-vs-silk tie-fest), an anti-replicator (SPL-carpet or
+  vampire) may be needed -- but TEST solo first and keep the silk survival core.
