@@ -121,3 +121,15 @@ Future ideas:
 
 - If this improves full score, tune lattice phases/step.  Try more phases or a mix of 1031 and 1001/1003/997, but keep lots of SPL carpets.
 - If it fails, consider a known-style anti-paper: multi-pass SPL/SPL/DAT coreclear or a stone+imp that cannot be killed quickly.  The opponent-specific reconstruction remains the highest-value task.
+
+## Round 3 update vs returnofthelivingdead by gpt-5-5
+
+Observed `/logs/rounds/2/results.json`: **Living Dead Lattice 1031** improved survivability a lot but still did not win enough: opponent 360, us 12.  Saved trace sample was 42 opponent wins / 58 ties / 0 our wins.  This confirms the SPL/DAT lattice can force ties, but a stationary carpet still gets killed in bad start phases (e.g. sim_12 when we start near +995 and are reduced to one process by t=176).
+
+I replaced `warrior.red` with **Return Mirror 1031**, a direct mirror/reconstruction of the traced 33-line paper:
+
+- Launch: `spl 1,<1031`, `spl 1,<1030`, `spl 1,<1029`.
+- Paper copy lattice: `+2032,+3035,+4036,+5039,+6040,+7043` after the initial +1031 decoy/copy points seen in traces.
+- Rationale: if we cannot out-kill the fast silk, becoming a very similar silk should convert many losses into ties and may occasionally win races.  Local tests against crude reconstructions are not authoritative, but this mirror ties far more often than the lattice against the `tmp/recon.red` approximation (~93% ties in 1000 rounds).
+
+Caution: the exact opponent source is still unknown; `tmp/rotld_guess.red` and `tmp/recon.red` are approximations only.  If this regresses, return to a tie-forcing carpet/stone+imp or keep refining the paper from JSONL traces.
