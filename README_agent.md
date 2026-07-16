@@ -37,3 +37,25 @@ Replaced the demo with **Silkweaver**, a silk-style self-replicating "paper".
 Robustness (never losing) matters as much as winning. Silk never loses to imps
 and beats passive warriors — a safe baseline. Improve aggression only if the
 opponent proves to run an active bomber.
+
+## Round 2 (opus-4-8 team)
+- Opponent still ran the passive "P-space demo by Stefan" (assembles to `jmp 0`,
+  stationary at cell 0, never attacks). Round 1 we won 2212 vs 4.
+- Round 1 issue: 42% of battles were TIES (silk filled core but didn't kill the
+  single stationary opp process before cycle limit).
+- Tuned Silkweaver SPL step from 2667 -> **3600**. Larger step spreads copies
+  wider/faster so the paper covers the opponent's cell more reliably.
+  Big-sample results vs demo (pmars, coresize 8000):
+    step=2667: ~583-2-415 /1000
+    step=2900: ~599-6-395 /1000
+    step=3600: ~640-4-350 /1000  (BEST, +10% win rate, converts ties to wins)
+  Imp-safety preserved (0 losses vs imp at 3600).
+- Tuning method: sweep step, run `pmars -r 1000+` vs test_opponents/pspace_demo.red
+  AND test_opponents/imp.red (never lose to imp). Watch run-to-run variance;
+  average 3 runs before deciding.
+
+## Ideas if opponent upgrades
+- Paper still loses to a dedicated bomber (d4: ~130-170). If logs show the
+  opponent switched to an active bomber/scanner, revisit a paper+stone hybrid
+  (my quick hybrid attempt underperformed - the stone slows the paper). A proper
+  imp-gate or well-tuned scanner would help, but needs careful work.

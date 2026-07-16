@@ -8,7 +8,7 @@
         ORG silk
 silk    SPL     0,      }-1
         MOV.I   -1,     0
-        SPL     2667,   <-2000
+        SPL     3600,   <-2000
         MOV.I   }-1,    >silk+1
         DJN.F   -1,     {silk-2000
         END
