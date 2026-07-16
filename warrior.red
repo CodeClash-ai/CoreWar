@@ -1,46 +1,71 @@
-This text before the ;redcode line is ignored.
 ;redcode-94
-;name P-space demo
-;author Stefan
-for 0
-    This warrior demonstrates the new P-space features
-    of pMARS. It is by no means a competitive warrior.
-    By the way, this is a for/rof block comment.
-rof
-;assert VERSION >= 80 && ROUNDS > 1    ;must play at least two rounds
+;name TwinSweep
+;author sonnet-5
+;strategy Four dwarf-style bombers (two slow/thorough, two fast/coarse) in
+;         two opposite directions from our own code, giving both quick
+;         reach against nearby small targets and full-core coverage as a
+;         backup. Bomb pointers for outward sweeps are placed at the very
+;         front/back of our instruction block so the first bombing step
+;         already lands outside our own code. Each sweep counts down and
+;         stops just short of a full lap so it can never re-enter (and
+;         overwrite) our own code; it then resets and repeats forever.
 
-_RESULT     equ #0 ;P-space cell 0 is initialized with the last round result
-_COUNTER    equ #1 ;user-defined
-_STRATEGY   equ #2 ;user-defined
+HALF    equ     3990        ; a little under core/2: safety margin so a
+                            ; slow sweep can never reach back to our code.
+FAST    equ     4           ; step size for the fast scanners: big enough
+                            ; to close distance quickly (matches/beats a
+                            ; classic step-4 dwarf's speed), small enough
+                            ; that repeated fast sweeps still eventually
+                            ; touch every residue class over multiple laps.
+FHALF   equ     996         ; ~ HALF/FAST laps before a fast sweep resets
 
-for ROUNDS > 10         ;a lot of history to work with, otherwise don't bother
-    ldp _COUNTER,#0     ;increment a round counter
-    add #1,-1
-    stp.b -2,_COUNTER
+        org     start
 
-str ldp _STRATEGY,#0    ;load strategy
+bbmb    dat     #0, #0        ; slow backward sweep bomb/pointer (front)
+bcnt    dat     #0, #HALF
+btmpl   dat     #0, #HALF
 
-res ldp _RESULT,#0      ;load last result into B-field
-    sne #-1,res         ;is this the first round, i.e. no result?
-    jmp naive           ;don't know what's going on yet
-    jmz loss,res        ;a zero indicates a loss in the last round
-  for WARRIORS <= 2     ;standard one-on-one
-    djn tie,res
-    jmp win
-  rof WARRIORS <= 2
-  for WARRIORS > 2      ;multi-warrior
-    slt #10,res         ;won with ten other warriors or less?
-    jmp win
-    jmp tie
-  rof WARRIORS > 2
-rof rounds > 10
+gbmb    dat     #0, #0        ; fast backward scanner bomb/pointer
+gcnt    dat     #0, #FHALF
+gtmpl   dat     #0, #FHALF
 
-naive   jmp 0           ;here goes some default code
-win     jmp 0           ;use _STRATEGY in str to find out what we
-                        ;did last and keep doing it
-loss    jmp 0           ;look at _STRATEGY and do something else, update
-                        ;_STRATEGY
-tie     jmp 0           ;who knows?
+start   spl     back, 0       ; slow backward sweeper
+        spl     fast_f, 0     ; fast forward scanner
+        spl     fast_b, 0     ; fast backward scanner
 
-The     End
+fwd     add.ab  #1,   fbmb
+        mov.i   fbmb, @fbmb
+        djn     fwd,  fcnt
+        sub.ab  #HALF,fbmb
+        mov     ftmpl,fcnt
+        jmp     fwd
 
+back    add.ab  #-1,  bbmb
+        mov.i   bbmb, @bbmb
+        djn     back, bcnt
+        add.ab  #HALF,bbmb
+        mov     btmpl,bcnt
+        jmp     back
+
+fast_f  add.ab  #FAST,  hbmb
+        mov.i   hbmb, @hbmb
+        djn     fast_f, hcnt
+        sub.ab  #FHALF*FAST, hbmb
+        mov     htmpl, hcnt
+        jmp     fast_f
+
+fast_b  add.ab  #-FAST, gbmb
+        mov.i   gbmb, @gbmb
+        djn     fast_b, gcnt
+        add.ab  #FHALF*FAST, gbmb
+        mov     gtmpl, gcnt
+        jmp     fast_b
+
+fcnt    dat     #0, #HALF
+ftmpl   dat     #0, #HALF
+hcnt    dat     #0, #FHALF
+htmpl   dat     #0, #FHALF
+fbmb    dat     #0, #0        ; slow forward sweep bomb/pointer (back)
+hbmb    dat     #0, #0        ; fast forward scanner bomb/pointer
+
+        end
