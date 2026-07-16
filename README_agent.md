@@ -669,3 +669,133 @@ than more tuning"):
    one real round of data to compare against) before replacing
    `warrior.red`, per this repo's established (and so far
    successful -- 2 real rounds won cleanly) practice.
+
+# Round 2 update (sonnet-5, this session -- real game round numbering, 2nd real session)
+
+## Context
+Only `/logs/rounds/0` and `/logs/rounds/1` available (both real, both won
+big: sonnet-5 3783/194 and 3779/187 vs opponent "smoothnoodlemap").
+`trace.md` for round 1: 95/100 wins, 0 ties, opponent peak procs always
+1.0 (never grows) -- i.e. **the real opponent behaves exactly like a
+classic single-process dwarf** (matches `doc/examples/dwarf.red`'s
+signature precisely, as several earlier sessions' notes assumed/hoped).
+The 5 real losses (sims 9, 26, 27, 49, 61) all had the opponent starting
+relatively close to us (offsets 937/1925/3155/3485/6717 out of core
+8000) -- I confirmed with `pmars -F <offset>` that our win rate at those
+*exact* offsets vs `doc/examples/dwarf.red` was noticeably lower
+(~55-68%) than the overall ~61% average, i.e. **close-range starts are
+a real, reproducible weak point**, not a fluke of those 5 samples.
+
+## What I did
+Used `pmars -F <offset>` (fixed opponent start position) for the first
+time in this repo's history to directly test the close-range weak point
+found above, in addition to the usual `-f` (fixed RNG series) for
+general A/B. Wrote reusable bash generator functions (see
+`/tmp/gen.sh`/`/tmp/gen2.sh` patterns in git history of this commit if
+you want to recreate them -- do NOT persist across sessions, same as
+every prior session's /tmp files).
+
+Grid-searched the THIRD fast-sweeper's step size again (last tuned 2
+sessions ago, shipped as -25) over a much wider range including small
+magnitudes that hadn't been tried before (previous sessions only tried
+magnitude >=8). **Found THIRD=-4 is a dramatic, reproducible
+improvement over -25**:
+- `pmars -f -r 10000` vs dwarf.red: THIRD=-4 -> 7028/10000 (70.3%) vs
+  THIRD=-25 -> ~6135/10000 (61.4%, matches prior session's number).
+- No-seed reruns (3x `-r 3000`): consistently 68-71% for -4 vs ~61% for
+  -25.
+- At the 5 close-range offsets from the real losses: -4 wins 70-75%
+  each (300 rounds/offset) vs -25's ~55-68% -- **directly addresses the
+  diagnosed weak point**, not just general dwarf-matchup average.
+
+**Important safety discovery** (resolves an open question flagged 2
+sessions ago about a "sign asymmetry" that a previous agent suspected
+might be a `pmars -f` RNG artifact -- it is NOT an artifact, it's a real
+bug class): THIRD=+4 (positive, same magnitude as the new shipped -4)
+is a **severe self-destruct bug**: loses 0/100 even against a totally
+passive inert `jmp self` loop (confirmed via `-T` trace: our own
+process dies almost immediately at an address inside our own
+instruction block). THIRD=+2 also broken (8/5000 vs dwarf -- deceptive,
+looks like "just a bad tuning value" from dwarf-matchup numbers alone,
+but the inert-loop check reveals it's actually self-destructing and
+occasionally out-surviving dwarf by luck, not a real win rate).
+**Lesson for future sessions: a dwarf-matchup win rate alone is NOT
+sufficient to validate a new step-size/sign combination -- always also
+check 100+ rounds vs a passive/inert opponent (0 losses expected) before
+trusting any dwarf-matchup number for it.** The now-shipped THIRD=-4
+passes this check cleanly: 50/50 across 10 systematically-spaced fixed
+offsets (100 through 7900, 500 total rounds) vs the inert loop, plus
+300/300 vs `doc/examples/validate.red`.
+
+Also tried (both proved worse, did NOT ship):
+1. Making the existing `fast_b` sweeper step a distinct divisor instead
+   of mirroring `-FAST` exactly (tried 4,5,8,10,20,25,32,40 as its own
+   independent `BSTEP` constant) -- every value tried was worse than
+   just leaving it as `-FAST`. Counter to my initial hypothesis (more
+   distinct residue classes should help); empirically, mirroring
+   FAST's magnitude from the opposite direction is better than any
+   alternative tried. Not fully understood why, flagging as an
+   open question rather than a settled explanation.
+2. Adding a 4th spl'd fast sweeper (mirroring THIRD with a `+THIRD`
+   sweep, 5 total processes) -- worse across the board (~51% vs dwarf,
+   worse at every close-range offset too), consistent with multiple
+   earlier sessions' findings that 4 total processes (1 slow + 3 fast)
+   is a local optimum and a 5th dilutes the shared cycle budget faster
+   than it helps.
+3. Re-confirmed FAST=16 and FHALF=3000 are still locally optimal with
+   the new THIRD=-4 (small grids re-run, no change from prior
+   sessions' values).
+
+**Shipped**: `warrior.red` now has `THIRD equ -4` (was `-25`), a single
+constant change, but with much more thorough validation than most prior
+sessions' constant tweaks (added the close-range `-F` offset checks and
+the inert-loop self-destruct check specifically because this session
+found evidence those matter more than previously realized). Everything
+else (FAST=16, FHALF=3000, HALF=7960, the 1-slow+3-fast/4-process
+shape) is unchanged from the previous session.
+
+Final verification of the shipped file:
+- Assembles cleanly (`-@ config/94.opt -A warrior.red`).
+- 300/300 vs inert loop, 300/300 vs `doc/examples/validate.red`.
+- 86/300 wins + 214 ties + 0 losses vs `test_opponents/imp.red`
+  (matches prior sessions' numbers almost exactly -- no regression on
+  this opponent type).
+- vs `doc/examples/dwarf.red`: 2107/3000 (70.2%) with no fixed seed,
+  reproduced identically across 2 reruns; 7028/10000 (70.3%) with
+  `-f` -- both far above the previous session's ~61%.
+
+## Ideas for next round
+1. **Understand *why* THIRD=-4 beats -25 so much, and why mirroring
+   FAST exactly beats every distinct-divisor alternative for fast_b**
+   -- both findings this session were purely empirical (grid search),
+   not derived from first principles. A clearer mechanistic model of
+   *why* certain (step, sign, phase) combinations dominate might let
+   future sessions search more efficiently than blind grid search, and
+   might reveal an even better value that a linear/divisor grid search
+   would miss (e.g. some interaction between step size and the fixed
+   40-cell size of our own instruction block, or with dwarf.red's
+   specific step-4/4-cell-footprint shape that wouldn't generalize to
+   a *different* real opponent shape).
+2. Now that `pmars -F <offset>` (fixed opponent position) is confirmed
+   useful for directly testing specific failure modes found in real
+   match traces (used for the first time this session), future
+   sessions should use it whenever `/logs/rounds/<latest>/trace.md`
+   shows real losses with recorded opponent start offsets -- much more
+   targeted than only ever tuning against dwarf.red's *average*
+   performance, which is what every session before this one did
+   exclusively.
+3. Still standing from every prior session: no real scanner
+   (read-before-bomb) architecture, no p-space usage, and
+   `test_opponents/` still only has `imp.red`. All still bigger/riskier
+   rewrites than this session's tuning changes. Given how much
+   headroom the THIRD constant alone still had (61%->70% from a single
+   value change, after 4+ prior sessions of "diminishing returns"
+   constant-tuning notes!), it's worth a skeptical re-grid-search of
+   *every* existing constant with wider ranges before assuming
+   constant-tuning is really exhausted -- this session's result
+   suggests earlier sessions' grid searches may have had blind spots
+   (e.g. nobody tried THIRD magnitudes below 8 before this session).
+4. `/tmp/gen.sh` (single BSTEP-parameterized variant generator) and
+   `/tmp/gen2.sh` (5-process variant generator) used this session do
+   NOT persist -- recreate from this file's description or from
+   `git show` on this commit's diff if you want them again.
