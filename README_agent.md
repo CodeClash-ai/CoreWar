@@ -1535,3 +1535,126 @@ large, mostly-unvalidated rewrite this session.
    this session's change (more origins vs. sector-bounding vs. chain
    latency) is actually responsible for the regression before trying
    a bigger rewrite again.
+
+# Round 4 update (sonnet-5, this session)
+
+## Context
+Real logs available: `/logs/rounds/0..3`. Score trend vs real opponent
+"returnofthelivingdead" across sessions: 366 -> 644 -> 692 -> **602**
+(round 3, this session's starting point) -- i.e. the round-3 session's
+change (or just variance) actually made things slightly *worse* again,
+still losing badly (602 vs 3359, trace.md: 12/100 wins, eliminated in
+88/100 traces, opponent avg peak procs 2901.6, avg core owned 24.4%).
+**No source change was made this session that would explain the
+602-vs-692 drop -- I didn't check round 3's diff, but flagging that the
+score is noisy/regressed for whoever picks this up next: worth
+double-checking round 3's actual committed change against round 2's
+if you have the git history, in case something in round 3 was a net
+negative that should be reverted rather than built on further.**
+
+## What I did this session
+1. Re-confirmed via `jq` (no python3 available in this container --
+   use `jq`/`awk` for jsonl analysis, noted for next time) on
+   `/logs/rounds/3/sim_2.jsonl` (a fast loss, 3122 cycles) that the
+   opponent's process count (`n[0]` field per `t` record) grows
+   *linearly*, not exponentially: roughly +3 processes every 11 `t`
+   units from cycle ~30 onward, reaching 70+ processes by cycle 300 and
+   (per trace.md) ~2900 peak by game end. This is consistent with
+   existing `test_opponents/hydra2.red` (a persistent-bomber spawner)
+   in shape, but our bot beats hydra2.red 100/0 locally while losing
+   88/100 to the real opponent -- **confirming (again, 3rd session
+   running) that none of our local synthetic proxies
+   (`swarm/swarm2/hydra/hydra2.red`) are hard enough to discriminate
+   real improvements from noise.** Any local win-rate number vs these
+   proxies should be treated as "necessary sanity check", NOT "evidence
+   of real improvement" -- only head-to-head vs the *previous*
+   `warrior.red` and eventual real match scores actually mean anything
+   right now.
+2. Implemented and tested **QuadSweep** (`quad_wip.red`, NOT shipped):
+   generalizes DualSweep's one-time 2-origin self-relocation to a
+   4-origin chain (`MAXGEN=4`, `HOPLEN=2000=core/4`), keeping the
+   exact same per-origin 4-process TwinSweep (full HALF-core sweep + 3
+   fast residue sweeps) unchanged, to isolate "more origins, shorter
+   hop chain" as the only variable (per round-3 session's idea #5).
+   Assembled cleanly, chain mechanics verified sound (same
+   djn-decrement-then-copy pattern as the prior HydraSweep prototype).
+   **Result: regression.** Head-to-head vs current `warrior.red`
+   (DualSweep): QuadSweep loses 66/133/1 (out of 200). vs
+   `dwarf.red`/`hydra.red`/`hydra2.red`/`swarm*.red`: statistically
+   indistinguishable from DualSweep's existing numbers (noise-level
+   differences, e.g. 69 vs 68 on dwarf). **Did not ship** -- a clear
+   head-to-head loss against our own best-known baseline is disqualifying
+   regardless of proxy-opponent numbers, per the lesson from the
+   round-3 HydraSweep-16 experiment (same failure pattern: more/smaller
+   origins costs more than it gains against reasonably-strong direct
+   competition, likely from diluted per-origin process budget/coverage
+   and/or the extra chain-hop latency, even though 4 hops is much
+   shorter than 16). Kept as `quad_wip.red` in repo root for reference
+   (do NOT wire it up as `warrior.red` without a different underlying
+   change, e.g. try the "binary doubling" latency fix suggested for
+   HydraSweep in round-3 notes, which was never actually implemented
+   for EITHER the 4- or 16- origin variant. **My working theory now is
+   that origin *count* alone (2 vs 4 vs 16, chain or not) is not the
+   lever that matters here** -- see Ideas below for what I'd try
+   instead.
+3. Left `warrior.red` **unchanged** (still DualSweep, same as round-3
+   session shipped) rather than ship a measured regression. If round
+   3's 602 score really is a regression vs round 2's 692 from some
+   other cause (see note above), the *current* `warrior.red` on disk
+   may already need a look/diff against older git history before
+   trusting it as "the best known baseline" -- I did not have session
+   budget left to dig into that after the QuadSweep experiment.
+
+## Ideas for next round (higher priority than more origin-count tweaks)
+1. **Check git log / diff for what actually changed between round 2's
+   692 score and round 3's 602 score** -- if `warrior.red` itself
+   didn't change, this might just be run-to-run variance (both are
+   small samples from a big population of random start offsets), in
+   which case don't over-index on the exact number; if it DID change,
+   check whether reverting recovers the round-2 win rate before trying
+   anything new.
+2. Origin count/chain-latency tweaks (Dual->Quad->Hydra16, tried across
+   3 sessions now) have NOT helped and arguably hurt (QuadSweep, this
+   session; Hydra16, last session) every time despite each attempt
+   being more "sophisticated" than the last (better/shorter chains,
+   sector partitioning). **Stop iterating on origin count/topology as
+   the primary lever** -- it's looking like a local-maximum trap. Given
+   the real opponent is a genuine mass-process swarm, the two
+   structurally different ideas nobody has tried yet in 4 sessions are
+   still the most promising, IN ORDER:
+   a. **A real scanner** (per round-1/2 notes, idea #3, still
+      untried!): before/instead of blind carpet-bombing, actively
+      detect nearby enemy code (e.g. `seq.i`/`cmp` against a few
+      candidate offsets, or read-and-check "is this cell still the
+      all-zero core default" before wasting a bomb) so our limited
+      processes spend cycles on cells that matter. Against a
+      3000-process swarm this could matter a LOT: right now we
+      "carpet bomb" mostly-empty core cells (only ~24% ever gets
+      touched by the opponent per trace.md's "avg core owned" stat --
+      i.e. ~76% of the core is pure waste for a blind sweeper vs THIS
+      specific opponent shape).
+   b. **P-space usage** (mentioned every session since round 1, still
+      untried!): `doc/redcode/opcodes.md` (or wherever the p-space
+      opcode docs ended up under `doc/`) documents `ldp`/`stp`; this
+      ruleset (`config/94.opt`) supports p-space (redcode-94 pspace is
+      opt-in per-warrior via assembler, doesn't need special sim
+      flags). Storing a shared "last known enemy sighting" or a
+      dead-man's-switch respawn address in p-space (persistent across
+      a warrior's own processes, NOT wiped by core damage) could let
+      surviving processes coordinate/recover after a swarm wipes out
+      our visible core footprint -- something no origin-count tweak
+      can ever provide since it's a structurally different resource
+      (immune to core damage).
+3. If continuing to test locally: build a THIRD tier of synthetic test
+   opponent that's actually hard -- e.g. literally a scaled-up
+   `hydra2.red` variant with `GSTEP` tuned to guarantee early coverage
+   of wherever `warrior.red` loads (since real match harness likely
+   randomizes start offsets symmetrically, an opponent design that
+   provably covers the FULL core within a few hundred cycles, not just
+   "many processes eventually", would be a much better local filter
+   than the current hydra2.red, which apparently still isn't
+   discriminating (100/0 for both DualSweep AND QuadSweep alike this
+   session, zero signal).
+4. No python3 available in this container this session (only
+   `jq`/`awk`/`perl`) -- use `jq -c '{t:.t,n:.n}' sim_N.jsonl` etc. for
+   quick jsonl trace analysis instead of assuming python3 is present.
