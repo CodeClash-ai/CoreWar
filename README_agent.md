@@ -557,3 +557,115 @@ Final verification of the shipped file (not just the /tmp candidate):
    session) -- only `perl`/`awk`/`bash`. Don't waste a step trying it;
    use bash heredocs (see `/tmp/gen_variant.sh` pattern above) or perl
    for any future generator/analysis scripts.
+
+# Round "1" update (sonnet-5, this session -- real game round numbering)
+
+## Context
+Only `/logs/rounds/0` was available this session. Real result:
+`results.json` shows **winner sonnet-5**, score **sonnet-5 3783 vs
+smoothnoodlemap 194** -- a big, clean win. `trace.md` (100 traced
+battles): sonnet-5 won **97/100**, 0 ties, lost only 3 (sims 0, 16, 79).
+Opponent name is **"smoothnoodlemap"** (NOT "dwarf"/"validate" like
+prior sessions' logs suggested for earlier rounds -- this is a
+different, real opponent). Confirmed via `starts` field in the raw
+`sim_*.jsonl` traces that the opponent's assembled warrior is **86
+instructions** (much bigger than any of our tuning reference opponents
+`dwarf.red`(4)/`validate.red`/`imp.red`(1) -- so it's presumably a
+real, nontrivial bot, not a simple demo), while ours is 39 instructions
+(matches `warrior.red`'s current TwinSweep build). Despite being a
+much bigger, presumably more sophisticated program, it still loses to
+our blind-carpet-bomber sweep 97% of the time.
+
+The 3 losses (sims 0/16/79) all happened relatively early (t=7350,
+similar range for the others) and all at opponent starting distances
+fairly close to us (opponent loaded at offset 7247/6329/4227 vs our
+offset 0 -- i.e. within roughly half the core or less). Did not have
+step budget this session to fully decode the jsonl per-cycle trace
+format (it's produced by the outer game harness, not by anything in
+`src/*.c` in this repo -- grepped, not found, so don't waste a step
+looking for a "spec" for it locally) to root-cause exactly how those 3
+losses happened; flagging as an open item below rather than guessing.
+
+## What I did this session
+Given the very strong existing result (already winning ~97%), treated
+this as a "verify + document + light regression-proof" session rather
+than a risky rewrite, per the standing advice in these notes ("if
+you're already winning, more testing/documentation may be higher value
+than more tuning"):
+
+1. Re-verified the current shipped `warrior.red` (TwinSweep, 1 slow +
+   3 fast sweepers, FAST=16/THIRD=-25/FHALF=3000, unchanged from last
+   session) still assembles cleanly and is still safe/strong against
+   every local reference opponent, using `pmars -f` for reproducibility:
+   - vs `doc/examples/dwarf.red`: 313/500 (62.6%) -- consistent with
+     (slightly above) the ~61.4% found in prior sessions' larger-n grid
+     searches; no regression.
+   - vs `doc/examples/validate.red`: 200/200, 0 losses/ties.
+   - vs an inert `jmp self` loop (recreated at `/tmp/inert.red`, does
+     NOT persist -- recreate via the one-liner if you need it again):
+     200/200, 0 losses/ties.
+   - vs a newly-added `test_opponents/imp.red` (see below): 70 wins /
+     0 losses / 130 ties out of 200. **Never loses to Imp, but ties a
+     lot** -- expected and OK, not a regression: a lone imp just keeps
+     relocating itself every cycle forever and there's no in-repo
+     "detect and permanently pin down a mover" logic yet (see hills.md
+     scoring: draw is worth 1/3 of a win, so this is still much better
+     than losing, just not as good as a clean kill).
+2. **Finally created `test_opponents/` (suggested unactioned for 5+
+   prior sessions' notes)**, currently containing `imp.red`: a classic
+   single-instruction self-copying "imp" (`mov.i 0,1` loop). This is a
+   qualitatively different opponent shape from `dwarf.red` (moves every
+   cycle instead of sitting still bombing) and is a good cheap sanity
+   check for "does our sweep design cope with a *moving* target, not
+   just a static bomber" -- recommend keeping this file and adding to
+   it (a simple scanner, a small replicator) in future sessions if you
+   have spare budget; it's cheap insurance for future tuning sessions.
+3. Confirmed (via `hills.md`) the actual meta-scoring formula used to
+   turn win/draw/loss rates into a score, since no prior session's
+   notes had pinned this down explicitly: **`Score = Win% * 3 + Draw%`**
+   (matches pmars's own per-match `-r N` "scores" output exactly, e.g.
+   the imp test above: 70 wins*3 + 130 draws*1 = 340, matching the
+   printed "TwinSweep... scores 340"). Useful for future tuning:
+   **draws are worth 1/3 of a win, and losses are worth 0** -- so if a
+   future change trades some wins for draws (e.g. a "safer" but less
+   aggressive strategy), do the arithmetic explicitly rather than just
+   eyeballing win-rate %, since Score = 3W+D is not the same ranking as
+   raw win-rate once draws are involved.
+
+## Ideas for next round
+1. **Root-cause the 3 real losses from `/logs/rounds/0`** (sims 0, 16,
+   79) properly if a future session has a jsonl-trace-decoding tool
+   (or just more patience) -- would be the highest-value next step
+   since we now have concrete real-opponent loss examples to learn
+   from, unlike most prior sessions which only had synthetic `dwarf.red`
+   data. All 3 losses happened early (~t=7350 in sim_0) with the
+   opponent starting relatively close to us (within ~half the core) --
+   consistent with the standing hypothesis (multiple prior sessions'
+   notes) that our large contiguous 39-cell footprint at a fixed
+   position is vulnerable to being found and bombed quickly by a
+   nearby, competent opponent before our own sweeps reach them. Still
+   nobody has tried the "shrink our footprint" or "add a scanner"
+   ideas suggested every session since round 1 of this repo's history
+   -- given we now have real evidence (not just Dwarf-matchup
+   extrapolation) that early/close losses are the actual failure mode,
+   this is probably worth prioritizing over more constant-tuning.
+2. Opponent this session ("smoothnoodlemap") was a real, 86-instruction
+   bot, unlike some earlier sessions' logs (which per older notes in
+   this file were sometimes literally `doc/examples/validate.red`/
+   `dwarf.red` demos) -- so the opponent identity/behavior can change
+   between rounds. Don't assume next round's opponent behaves like this
+   round's; re-check `/logs/rounds/<latest>/trace.md` and
+   `results.json` fresh each session before trusting old assumptions.
+3. Continue building out `test_opponents/` (only `imp.red` so far) --
+   a simple one-shot scanner/bomber and a small replicator would round
+   out coverage of the main CoreWar archetypes (mover, bomber,
+   scanner, replicator) for regression testing.
+4. No changes were made to `warrior.red` itself this session (only
+   `test_opponents/imp.red` added + this note) -- the existing
+   TwinSweep design/constants are unchanged and already verified safe.
+   If you pick up idea #1 above, prototype in `/tmp` and A/B against
+   `doc/examples/dwarf.red` + `test_opponents/imp.red` + the real
+   `/logs/rounds/<latest>` trace data (if by then there's more than
+   one real round of data to compare against) before replacing
+   `warrior.red`, per this repo's established (and so far
+   successful -- 2 real rounds won cleanly) practice.
