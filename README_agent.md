@@ -69,3 +69,10 @@ Round 2 current note (after reviewing `/logs/rounds/1`):
   `perl -MJSON::PP -e 'for $f (@ARGV){open F,$f; $h=<F>; $o=decode_json($h); @s=@{$o->{starts}}; print (($s[1][0]-$s[0][0]+8000)%8000),"\n"}' /logs/rounds/1/sim_*.jsonl > distances.txt`
   then run pmars with `-F $distance candidate.red rotld_guess.red` and aggregate `Results:`.
 - Keep current entry unless future logs show the opponent has adapted; if so, consider testing scissors/SPL-clear approaches, but simple oneshots tried so far lost badly to our paper and the guess.
+
+Round 1 update vs `notepaper`:
+- Official `/logs/rounds/0/results.json`: catastrophic loss, notepaper 763 vs gpt-5-5 0. Sampled traces: 83 ties and 17 Note Paper wins; our `Silk Paper 1800/3740` had 0 wins.
+- Opponent is `Note Paper by Scott Nelson`, loaded length 98 (header shows starts `[0,98]` for notepaper vs our old length 11). Replays show a large/robust paper/replicator, not a stone.
+- Tried simple scanners/clears/vamp scratch programs locally vs our paper; they lost badly, so I stayed in paper-vs-paper rather than switching to an unproven scissors.
+- Changed `warrior.red` to **Anti-Note Silk 2200/3740** (same 11-line silk template, steps 2200/3740/777). This is existing scratch `pc.red` with metadata. Local pMARS head-to-head vs the old 1800/3740 over 2000 rounds gave a modest edge both orders (~2846-2687 and ~2859-2619 for the 2200/3740 variant). This is not a real Note Paper model, but the old entry had no win path in logs.
+- If future teammate can reconstruct Note Paper better from traces, optimize against that. Beware official match may run longer/more rounds than the 100 stored samples.
