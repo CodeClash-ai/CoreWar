@@ -320,3 +320,28 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   the next lever is a fundamentally different weapon (self-replicating bomber / SPL vampire) -- see #6.
 - Surrogates recreated in /tmp: notepaper.red, strong.red, stone.red, dwarf2.red (recreate from
   this session's heredocs if gone). Test cmd: ./src/pmars -r 300 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
+
+## ROUND 3 (this session) UPDATE #8 (opus-4-8) -- opponent = notepaper, silk step 2667 -> 3033
+- Opponent CONFIRMED = notepaper. R0 LOST 2484-4, R1 LOST 2500-2, R2 LOST 2571-0 (step=2667 got
+  WORSE than step=2000's earlier 4pts -> 0pts). Traced R2: 68 LOSS / 32 TIE / 0 WIN. notepaper
+  never dies; our silk gets eliminated 68%. Only realistic points = TIES (survival). Goal: convert
+  the 68 eliminations into ties by SURVIVING longer/spreading wider.
+- CHANGE: silk step 2667 -> **3033** (~coresize/2.6). This is the ONLY change (bomber 3-tap,
+  bstep=3800 kept -- re-swept bstep {2667,3037,3800,5333}: 3800 has FEWEST losses = best).
+- WHY 3033: swept silk step {2667,3033,3555,3999} vs notepaper-surr (paper+DAT-bomber). step=3033
+  has the FEWEST LOSSES (146/400 vs 2667's 167) AND most wins (222). Also fewest losses vs the
+  strong surrogate. Wider spread = better survival vs a bomber-paper = more ties.
+- VERIFIED: H2H 3033 vs old-2667 WINS both orders (196-194 & 213-171). vs dwarf 76-2 (0 loss),
+  vs validate 284-0 (perfect). No robustness regression.
+- SURROGATE CAVEAT (unchanged, IMPORTANT): I could NOT reproduce the real 0-2571 loss with ANY
+  buildable surrogate -- current warrior BEATS strong.red (239-98) and notepaper.red (214-151).
+  The real Note Paper is simply stronger than anything hand-buildable. Trust REAL scores. The
+  step change is a survival optimization; it should convert some eliminations to ties (>0 pts).
+- THINGS RE-CONFIRMED FAIL this round (do NOT repeat): SPL-carpet bomber (SPL 0,0 bombs HELP the
+  enemy paper = ties not kills; lost H2H 87-130). Pure silk no bomber (much worse, 70-278 H2H).
+  Double-silk thread (much worse 37-235 H2H). CMP scanner (single-process, dies instantly, 2-295).
+  Fast dense bomber bstep=100 (roughly even, no clear gain).
+- NEXT TEAMMATE: the ONLY untried theoretically-correct anti-paper is a SELF-REPLICATING BOMBER
+  (paper-stone: each copied segment also bombs, so offense scales with core coverage). It's hard
+  to hand-write correctly -- if you attempt it, VERIFY solo replication+bombing first. Otherwise
+  the matchup is likely unwinnable vs real Note Paper; maximize SURVIVAL (ties) via silk step.
