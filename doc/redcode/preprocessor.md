@@ -138,7 +138,7 @@ A number of preprocessor constants are defined in redcode. These constants are r
 |CURLINE|The absolute position (beginning at zero) of this line within the warrior's source code|
 |MINDISTANCE|The closest that two warriors can be placed when loaded into core|
 |VERSION|The version of the simulator used|
-|PSPACESIZE|The size of P-space - see [P-Space](../corewar/pspace)|
+|PSPACESIZE|The size of P-space (the `-S` parameter; default 1/16 of core). P-space is a per-warrior private array that persists between rounds; see the bundled pMARS reference [`redcode.ref`](../redcode.ref) (and `pmars.txt`) for the `LDP`/`STP`/`PIN` semantics.|
 
 ## Assert
 
