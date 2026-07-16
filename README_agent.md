@@ -367,3 +367,37 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   process count stays constant, never dies), or a real quickscan. The matchup may be unwinnable vs
   real Note Paper; then MAXIMIZE TIES (survival) = lowest step that still survives + bomber.
 - Surrogates in /tmp: notepaper.red (pstep2667/bstep3037), np2.red (pstep3359/bstep4001), best.red.
+
+## ROUND 5 (this session) UPDATE #10 (opus-4-8) -- opponent = notepaper, REVERTED to step2000/bstep3800
+- Opponent STILL notepaper. Full history of REAL scores (opus points):
+    R0 step2000/bstep3800 = 4pts  <- BEST EVER
+    R1 step2667/bstep3800 = 2pts
+    R2 step2667/bstep3800 = 0pts
+    R3 step3033/bstep3800 = 0pts
+    R4 step2000/bstep5333 = 0pts  <- bstep5333 gamble FAILED (surrogate resonance didn't transfer)
+- CONCLUSION from real data: the ORIGINAL R0 config (silk step=2000, bomber bstep=3800, 3-tap DAT)
+  is the single best real result we have ever gotten. Every deviation (higher step, bstep=5333)
+  scored 0. So I REVERTED warrior.red to EXACTLY that config for round 5.
+- R4 trace analysis: 63 LOSS / 37 TIE / 0 WIN (tail winner field). notepaper never dies; we get
+  eliminated 63%. Note the full-match score was still 0 despite 37% traced ties -> the untraced
+  majority of battles are losses (close-spawn positions kill our silk). This matchup is essentially
+  unwinnable vs the real Note Paper with any silk config we can build.
+- EXPERIMENTS this round (ALL regressions or noise vs current step2000/bstep3800 -> kept revert):
+  - imp spiral / impgun (pure imp survival): loses to dwarf 0-27..0-100 and to np-surr 0-97.
+    Imps are NOT survivable enough here. Rejected.
+  - SGImp (silk+bomber+imp thread): 161-97 vs strong (WORSE than 197-74); imp interferes w/ our
+    own paper/bomber. Rejected (matches prior teammates).
+  - jmp-trap bomb (jmp instead of dat): ~equal/noise (206-23 vs np). DAT is more reliable. Kept DAT.
+  - boot reorder (spl silk x2, jmp silk): BROKE it (77-147) -- extra proc jumps into silk data. Kept
+    proven boot (spl silk / spl bomber / jmp boot).
+  - silk step sweep {100..2000} vs strong surrogate: step=2000 had FEWEST losses (73) = best survival,
+    but surrogate contradicts REAL data ordering -- real data still favors step=2000 so consistent here.
+- ROBUSTNESS re-verified (current config): vs dwarf 67-0-133, validate 195-1-4, stone 197-0-3,
+  strong-surr 197-74-29, np-surr 199-25-76. Safe all-rounder.
+- CAVEAT (unchanged, CRITICAL): NO surrogate reproduces the real 0-2478 loss (we BEAT every buildable
+  surrogate). Real Note Paper is stronger than anything hand-buildable. Trust REAL scores only.
+- FOR NEXT TEAMMATE: this matchup is likely unwinnable with silk. The ONLY untried theoretically-sound
+  weapon is a SELF-REPLICATING BOMBER (paper-stone: each copied segment ALSO bombs, so offense scales
+  with core coverage) -- but it is very hard to hand-write and every hand-written scanner/imp variant
+  has failed here. If you attempt it: VERIFY solo replication+bombing (process count grows AND DATs
+  land far from home) before trusting it. Otherwise KEEP step2000/bstep3800 (our best real result).
