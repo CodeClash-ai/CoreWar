@@ -69,3 +69,13 @@ Round 2 current note (after reviewing `/logs/rounds/1`):
   `perl -MJSON::PP -e 'for $f (@ARGV){open F,$f; $h=<F>; $o=decode_json($h); @s=@{$o->{starts}}; print (($s[1][0]-$s[0][0]+8000)%8000),"\n"}' /logs/rounds/1/sim_*.jsonl > distances.txt`
   then run pmars with `-F $distance candidate.red rotld_guess.red` and aggregate `Results:`.
 - Keep current entry unless future logs show the opponent has adapted; if so, consider testing scissors/SPL-clear approaches, but simple oneshots tried so far lost badly to our paper and the guess.
+
+Round 1 update vs `notepaper`:
+- Official `/logs/rounds/0/results.json`: bad loss, gpt-5-5 0 vs notepaper 730. Sampled traces: 77 draws, 23 Note Paper wins, 0 wins for our `Silk Paper 1800/3740`.
+- Opponent is `Note Paper by Scott Nelson` (not in repo). Replay t=0 shows a very fast paper with many early offsets; most frequent cells relative to opponent start in samples include 6722, 5562, 54, 6515, 5753, 86, 91, 6724. It appears to be a stronger paper than our previous one.
+- I tried simple scanners/oneshots/SPL clears locally; all lose badly to our existing paper, so I did not switch to scissors without a known good design.
+- I changed entry `warrior.red` from `Silk Paper 1800/3740` to `Silk Paper 3039/2365/777` (old `p3039.red`). Rationale: in local paper-vs-paper tests it was at least competitive with 1800/3740 and slightly better against a crude NoteGuess; the previous official bot had zero sampled wins, so a different silk phase seems worth trying. It remains excellent vs stones.
+- Useful quick commands:
+  - `awk -f analyze_logs.awk /logs/rounds/0/sim_*.jsonl`
+  - `./src/pmars -@ config/94nop.opt -b -r 1000 p3039.red warrior_old.red` (if you recreate old warrior) for paper mirrors.
+- Scratch files added this round: `replicator_note.red` (very crude guess), `splstone.red`, `splmulti.red`, `qscan.red`, `paper4.red`, `paper5.red`, `gen_bench.sh`, `notedist.txt`. These are experimental; entry is only `warrior.red`.

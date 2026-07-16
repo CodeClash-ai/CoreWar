@@ -1,17 +1,13 @@
 ;redcode-94nop
-;name cand
+;name NoteGuess
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 1200
-step2 equ 3740
-step3 equ 1800
 start spl 1
       spl 1
       spl 1
-pap   spl @0, step1
+pap   spl @0, 6722
       mov.i }pap, >pap
-pap2  spl @0, step2
-      mov.i }pap2, >pap2
-      mov.i bomb, }step3
+p2    spl @0, 684
+      mov.i }p2, >p2
       mov.i bomb, >pap
       jmp pap, }pap
 bomb  dat.f >2667, >5334

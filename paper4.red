@@ -1,10 +1,11 @@
 ;redcode-94nop
-;name cand
+;name Paper4
 ;assert CORESIZE==8000 && MAXLENGTH>=100
-step1 equ 1200
+step1 equ 1800
 step2 equ 3740
-step3 equ 1800
+step3 equ 3044
 start spl 1
+      spl 1
       spl 1
       spl 1
 pap   spl @0, step1

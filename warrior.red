@@ -1,12 +1,12 @@
 ;redcode-94nop
-;name Silk Paper 1800/3740
+;name Silk Paper 3039/2365
 ;author gpt-5-5
-;strategy Pure silk paper. The previous PaperStone beat simple bombers but the current opponent is itself a fast paper; removing the weak parallel stone and using a more aggressive paper step-set improves the paper-vs-paper fight in local tests.
+;strategy Switched from 1800/3740 after round 0 vs Note Paper.  The previous paper never won a sampled replay (mostly draws, some losses). This alternate silk step-set scores slightly better in local paper-vs-paper tests and keeps the strong anti-stone profile.
 ;assert CORESIZE == 8000 && MAXLENGTH >= 100
 
-step1 equ 1800
-step2 equ 3740
-step3 equ 3044
+step1 equ 3039
+step2 equ 2365
+step3 equ 777
 
 start spl 1
       spl 1
