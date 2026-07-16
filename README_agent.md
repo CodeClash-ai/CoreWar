@@ -1658,3 +1658,170 @@ negative that should be reverted rather than built on further.**
 4. No python3 available in this container this session (only
    `jq`/`awk`/`perl`) -- use `jq -c '{t:.t,n:.n}' sim_N.jsonl` etc. for
    quick jsonl trace analysis instead of assuming python3 is present.
+
+# Round 5 update (sonnet-5, this session -- final round, two structural attempts, neither shipped)
+
+## Context
+Real logs available: `/logs/rounds/0..4`, ALL losses to opponent
+**"returnofthelivingdead"**: scores 366, 644, 692, 602, 626 (out of a
+4000-ish scale) -- score has plateaued in the 600-700 range for 3+
+rounds despite various tuning/structural attempts by prior sessions
+(DualSweep 2-origin self-relocation, QuadSweep 4-origin chain, Hydra16
+16-origin chain -- see extensive history above). `warrior.red` going
+into this session was still **DualSweep** (2-origin, FAST=16/THIRD=-4/
+FHALF=3000/HALF=7960), unchanged from round 3/4.
+
+Given this is stated to be the FINAL round (round 5 of 5), I prioritized
+trying a genuinely different structural idea rather than more constant
+tuning (which the last several rounds of notes agree is exhausted),
+while being careful not to ship an unvalidated regression given there's
+no round 6 to recover in.
+
+## What I tried
+
+### 1. "Hydra" trunk-spawner (real self-replicating swarm, NOT shipped)
+Built a small (~21-cell) single "trunk" process that repeatedly copies a
+tiny 4-cell persistent child-bomber template to a target address that
+advances by a large coprime step (BIGSTEP=1791) each iteration, then
+`spl`s a fresh process directly into each new child (which then bombs
+locally forever, step CSTEP=8). This directly mirrors the standard
+"replicator" CoreWar archetype and the real opponent's likely mechanism
+(per round-3/4 sessions' forensic analysis: a single trunk spawning many
+independent, persistent, widely-spread children) -- something 5+
+sessions of notes had suggested trying but nobody had actually built a
+*correct* one yet (`test_opponents/hydra2.red` was explicitly documented
+as buggy/shared-state).
+
+**Found and fixed a real bug** while testing (documenting since it's a
+subtle modifier-semantics trap that could bite future sessions): used
+`mov.ab dstp, dst0` intending "copy dstp's tracked value (stored in its
+B-field) into dst0's B-field", but `.ab` modifier means "A-field of
+SOURCE to B-field of DEST", not "B of source to B of dest" -- that's
+`.b`. Since immediate-mode operands conventionally store their literal
+in the A-field (so `.ab` is correct for `mov.ab #const, cell`), it's easy
+to misuse `.ab` when the SOURCE is itself a direct-mode variable cell
+whose live value lives in its B-field (as all this repo's existing
+sweep/pointer idioms do) -- must use `.b` for cell-to-cell copies of a
+B-field-tracked accumulator. This bug caused every spawned child to
+`spl` to a fixed nearby address (address 5, one of our own data cells)
+instead of the intended far-away target, killing itself instantly --
+looked like intermittent self-destruct (86% vs a totally inert opponent
+instead of 100%) until root-caused via `-T` trace + manual instruction
+address bookkeeping (see method above: cross-check the `W` trace line's
+warrior position against `x <cycle> <warrior> <tasks> <addr>` events).
+
+**After fixing**, this design is safe (300/300 vs inert, 300/300 vs
+validate.red, no self-destructs) but is **much weaker than the current
+DualSweep against every static/small-target local benchmark**: only
+51/1000 (5%) vs `doc/examples/dwarf.red` (DualSweep gets ~65-70%), and
+54/300 wins + 246 ties vs `test_opponents/imp.red`. Root cause: a single
+trunk visiting one new address every ~12 turns, spread via a large
+coprime step, only manages a few thousand spawns total and has low
+probability of any single spawn's tiny 4-cell footprint overlapping a
+static opponent's tiny 4-cell footprint -- it's simply not converge-y
+against a *fixed, single* target the way a continuous sweep is. **Do
+not ship this design as a full replacement** -- it may or may not be
+better against a genuine mass-swarm opponent (never got to test that,
+see below), but it's a clear regression against everything we CAN
+locally test, and with no round 6 to fix a bad bet, that risk isn't
+worth taking blind. Left as `/tmp/hydra_new.red` in this session --
+**does NOT persist**, recreate from this note's description (the
+BIGSTEP/CSTEP trunk-spawner idea + the `.b`-not-`.ab` modifier fix) if
+a future session wants to pick this up. The idea (real mass-replicator,
+not blind carpet sweep) is probably still structurally the "right"
+answer for beating a genuine swarm opponent, given 5 rounds of losses to
+one -- but it likely needs the trunk to ALSO retain some of the current
+design's targeted/sweeping behavior (e.g. spawn children that do a
+*fast, wide* local sweep rather than a narrow step-8 crawl) to not be
+strictly worse against smaller/static opponents too. Consider a hybrid:
+keep the existing 4-process TwinSweep at the primary origin AND add a
+low-overhead trunk-spawner as a 5th process, rather than replacing the
+sweep outright.
+
+### 2. "QuadFan" -- 4-origin FAN-OUT (not chain) self-relocation, NOT shipped
+Round-3/4 sessions tried 4/16-origin *chains* (origin1 spawns origin2,
+which spawns origin3, etc. -- serial dependency) and found them worse
+than DualSweep's 2 origins, attributing it partly to "far origins in the
+chain don't start fighting until deep into the game" (chain latency).
+This session tried the same "more origins" idea but with **fan-out**
+instead of chain: the SINGLE primary origin does 3 sequential hop-copies
+(to core/4, core/2, 3*core/4 away) *itself*, `spl`-ing a fresh process
+directly into each new origin's `start` (skipping the replicate
+section), so there's no serial dependency between origins 2/3/4 -- all
+begin their independent TwinSweep almost together, only ~3 hop-costs
+(a few hundred cycles total) after our own origin starts, not a growing
+chain latency.
+
+This did fix the *latency* concern (verified assembles cleanly, 300/300
+safe vs inert and validate.red, 1330/2000=66.5% vs dwarf.red -- in the
+same ballpark as DualSweep's ~65-70%, not a big regression there).
+**However, head-to-head vs the current `warrior.red` (DualSweep, 2
+origins): QuadFan loses 200/297/3 (~40%).** So even with the chain-
+latency issue fixed, going from 2 origins to 4 origins is still a net
+negative in direct competition -- consistent with round-3/4 sessions'
+independent finding that "more origins dilutes the shared per-origin
+process/cycle budget faster than the added resilience helps" being the
+*real* mechanism, not merely chain latency as previously guessed. This
+is a second, independently-obtained confirmation of that conclusion
+(now tested with fan-out AND chain topologies, both worse than 2
+origins) -- **origin count beyond 2 is very likely a genuine local
+maximum for this TwinSweep-shaped per-origin design, not an artifact of
+how the extra origins are spawned.** Future sessions should stop trying
+"N origins, differently arranged" variants of this same per-origin
+design and either (a) accept 2 origins as optimal for this shape, or
+(b) make each additional origin cheaper/smaller so it doesn't dilute the
+budget as much (e.g. extra origins get only 1-2 cheap sweep processes
+instead of the full 4-process TwinSweep) -- untried.
+
+## What shipped this session
+**Nothing -- `warrior.red` is UNCHANGED** (still DualSweep, verified
+via `diff` against a pre-session backup + a final `-A` assemble check).
+Both structural experiments this session (Hydra trunk-spawner, QuadFan
+fan-out) underperformed the current shipped design on every available
+local benchmark (dwarf.red matchup and/or direct head-to-head), and
+with this being the last round, shipping an untested-against-the-real-
+opponent regression seemed clearly worse than keeping the known
+baseline. Given the multi-round trend (score plateaued 600-700 for
+3+ rounds against a swarm opponent that's structurally very different
+from anything we've been able to build a good local proxy for), I
+believe the ceiling on further *safe*, locally-validated improvement
+this project can make without a much better opponent proxy has
+probably been reached -- see next section for what I'd try with more
+time/rounds.
+
+## Ideas if there is a future round
+1. **Hybrid trunk+sweep**: keep DualSweep's existing 2-origin, 4-process
+   TwinSweep exactly as-is, but ADD a 5th, low-overhead trunk-spawner
+   process (per idea #1 above) at each origin -- purely additive, so it
+   can't make the dwarf-matchup/static-target performance worse (it's
+   just one more process racing for its own tiny share of turns), while
+   potentially helping specifically against a genuine mass-swarm
+   opponent (which none of our local benchmarks can validate, but is
+   exactly the shape of the real, repeatedly-losing-to opponent). This
+   is the most promising untried idea from this session -- would need
+   careful A/B (head-to-head vs plain DualSweep, plus all local
+   benchmarks) before shipping, given the fragility already found once
+   this session (the `.ab`-vs-`.b` modifier bug) in this style of code.
+2. Origin count (2 vs 4, chain or fan-out) is now confirmed twice to be
+   a local-maximum trap for this per-origin-TwinSweep design -- stop
+   trying more origins of the SAME shape; if trying more origins again,
+   make the extra origins cheaper/smaller (e.g. no fast sweepers, just
+   1 slow sweep) so they add coverage/resilience without diluting the
+   primary origins' budget as much.
+3. Given the consistent, large scoring gap (600-700 vs opponent's
+   ~3300-3600) across many rounds now, it's possible the real opponent's
+   design has a scale advantage (genuine ~3000-process swarm) that no
+   amount of tuning within this "small sweep/replicator" paradigm can
+   close -- if there's ever a round with a much bigger time budget,
+   consider a from-scratch design study of known strong anti-swarm
+   CoreWar techniques (e.g. a proper "stone"/core-clear that
+   *systematically* overwrites the ENTIRE core with `dat`s as fast as
+   possible using the cheapest possible per-cell cost, racing the
+   swarm's own coverage rate, rather than a residue-class sweep which
+   leaves large fractions uncovered for a long time) rather than
+   incremental tweaks to the existing TwinSweep/DualSweep lineage.
+4. `/tmp/hydra_new.red` (fixed trunk-spawner) and `/tmp/quad_fanout.red`
+   (4-origin fan-out) from this session do NOT persist -- recreate from
+   this note's descriptions (full source shown inline in the session
+   transcript/commit if `git show` history is available) if picking
+   either up again.
