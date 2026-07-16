@@ -1,16 +1,20 @@
 ;redcode-94
 ;name Hydra
 ;author opus-4-8
-;strategy DAT bomber (step=coresize/3) that sweeps to kill passive loopers,
-;strategy then falls back to a survival imp so it never loses to nothing.
+;strategy Fast DAT sweep (step=coresize/3) kills passive loopers & validate,
+;strategy then launches a 3-way imp spiral for survival vs active bombers.
 ;assert 1
-        org boot
+        org start
 step    equ 2667
-boot    add.ab #step, ptr    ; step = coresize/3, evenly-spaced fast sweep
+start   add.ab #step, ptr    ; step = coresize/3, evenly-spaced fast sweep
         mov.i  bomb, @ptr     ; drop DAT bomb at target
-        djn.f  boot, cnt      ; sweep the whole core (kills passive foes)
-        jmp    imp            ; fall back to an imp for survival vs active foes
+        djn.f  start, cnt     ; sweep the core (kills passive foes / validate)
+        spl    imp1           ; launch imp spiral for survival vs active foes
+        spl    imp2
+        jmp    imp3
 ptr     dat    #0, #step
 bomb    dat    #0, #0
-cnt     dat    #0, #100       ; number of sweeps before imp fallback
-imp     mov.i  0, 1           ; classic imp: never dies -> avoids losses
+cnt     dat    #0, #50        ; short sweep -> launch imps early to survive
+imp1    mov.i  imp1, imp1+2667
+imp2    mov.i  imp2, imp2+2667
+imp3    mov.i  imp3, imp3+2667

@@ -49,3 +49,21 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 - Test harness (verified working):
     ./src/pmars -r 100 -s 8000 -c 80000 -p 8000 -l 100 warrior.red /tmp/pspace.red
     # /tmp/pspace.red = ;redcode \n jmp 0   (recreate it; it's outside /workspace)
+
+## ROUND 3 UPDATE (opus-4-8)
+- Opponent CONFIRMED = "validate" (Validate 1.1R by Stefan Strack). Source is at
+  doc/examples/validate.red -> test directly: 
+    ./src/pmars -r 100 -s 8000 -c 80000 -p 8000 -l 100 warrior.red doc/examples/validate.red
+- Round 0 result: won 3997-3 (100-0 in traced battles). Our DAT sweep kills validate reliably.
+- IMPROVED Hydra: kept the 2667 DAT sweep BUT (a) shortened sweep to cnt=50 so imps launch
+  early, and (b) replaced the single lone imp with a proper 3-way SPL imp SPIRAL (imp1/2/3).
+  Results (r=100) vs test warriors:
+    validate: 100-0 (unchanged, still perfect vs the real opponent)
+    stone(3037 bomber): 100-0  (OLD Hydra LOST to stones -> big improvement)
+    dwarf: ~37-63 (was 33-67, marginal improvement; dwarf still beats us)
+    imp: ~9-0-91 (mostly ties, fine)
+    beats OLD Hydra head-to-head 51-49
+- Test opponents I created live in /tmp (recreate if needed): imp.red, stone.red.
+- REMAINING WEAKNESS: fast in-fighting bombers like dwarf still win (~37-63). The imp spiral
+  survives but doesn't kill fast bombers. If opponent EVER changes to an aggressive bomber,
+  build a proper scanner (e.g. a quickscan+bomber) and TEST -- but keep 100-0 vs validate.
