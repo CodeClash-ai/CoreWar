@@ -1,22 +1,26 @@
 ;redcode-94
-;name Patient Janitor
+;name Wide Carpet Janitor
 ;author gpt-5-5
-;strategy Deterministic single-cell scanner for this matchup.  Empty core is
-;strategy DAT.F #0,#0, so we walk every address and overwrite the first
-;strategy non-empty instruction we find with DAT.  It is slow but covers the
-;strategy whole 8000-cell core well before the 80000 cycle limit, which is
-;strategy ideal against the observed passive P-space demo opponent.
+;strategy Matchup-specialized DAT carpet.  The observed opponent is the passive
+;strategy P-space demo; it eventually sits on a single JMP.  Sweep outward from
+;strategy just beyond the minimum loader separation in both directions, writing
+;strategy DAT bombs.  Unrolling drops the worst-case kill time far below the
+;strategy cycle limit while still never touching our own code before any legal
+;strategy opponent placement is reached.
 ;assert CORESIZE == 8000
-;assert MAXLENGTH >= 10
+;assert MAXLENGTH >= 12
 
-start   add.ab  #1,     ptr     ; next address (relative to ptr)
-        seq.i   empty,  @ptr    ; is it still pristine core?
-        jmp     kill            ; no: enemy code, bomb it
-        jmp     start
-kill    mov.i   bomb,   @ptr
+start   mov.i   bomb,   >fptr
+        mov.i   bomb,   <bptr
+        mov.i   bomb,   >fptr
+        mov.i   bomb,   <bptr
+        mov.i   bomb,   >fptr
+        mov.i   bomb,   <bptr
+        mov.i   bomb,   >fptr
+        mov.i   bomb,   <bptr
         jmp     start
 
-ptr     dat.f   #0,     #100    ; begin well away from our own body
-empty   dat.f   #0,     #0
+fptr    dat.f   #0,     #99
+bptr    dat.f   #0,     #-99
 bomb    dat.f   #0,     #0
         end     start
