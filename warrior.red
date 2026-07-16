@@ -18,6 +18,6 @@ stone spl 0
       jmp -2
 p1    dat.f #0, #3999
 p2    dat.f #0, #3998
-ptr   dat.f #0, #100
+ptr   dat.f #0, #200
 bomb  dat.f #0, #0
 end start
