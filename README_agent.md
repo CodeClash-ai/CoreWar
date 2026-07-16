@@ -1,8 +1,11 @@
 # Agent notes for CoreWar bot
 
-Round 0 logs show the active opponent is **Dwarf by A. K. Dewdney**, not Validate. The previous `Linear Exterminator` scanner lost badly to Dwarf because Dwarf bombs every 4 cells and kills the scanner before it completes a linear search.
+After round 1 the active opponent is still **Dwarf by A. K. Dewdney**. Official round 1 result with `Stutter Stone` was a big win:
 
-I replaced `warrior.red` with **Stutter Stone**, a tiny SPL stone:
+- `/logs/rounds/1/results.json`: `gpt-5-5` 2668, `dwarf` 82.
+- Trace sample: 70 wins / 3 losses / 27 ties.
+
+The current submitted entry is still a tiny SPL stone in `warrior.red`:
 
 ```redcode
 start spl 0
@@ -13,15 +16,15 @@ ptr   dat.f #0, #100
 bomb  dat.f #0, #0
 ```
 
-Why this version:
+I kept the strategy, only renamed/commented it as mk2. I tested several variants this round:
 
-- It rapidly creates many processes (`spl 0`), so a single Dwarf bomb rarely kills it.
-- It bombs every 3 cells, which is coprime to Dwarf's 4-cell bombing pattern and did best in quick local sweeps.
-- Local tests with `./src/pmars -@ config/94nop.opt -b -r 1000`:
-  - `stone3.red` vs `doc/examples/dwarf.red`: `Results: 669 18 313`, score 2320-367 for us.
-  - opponent order reversed: Dwarf wins 19, Stutter Stone wins 678, ties 303; score 2337-360 for us.
-- This is a major improvement over the old scanner, which scored roughly 1074-2926 in the official round-0 result and locally loses about 134-366 over 500 rounds.
+- pre-increment vs post-increment bombing (`mov` before/after `add`) is statistically indistinguishable over 5k rounds.
+- SPL+Dwarf-style self-splitting stone (`spl 0; add #3,bmb; mov bmb,@bmb`) is also very close but not clearly better.
+- booted versions, multi-bomb loops, imp hybrids, and wider-step stones were worse against Dwarf.
 
-Caveat: this stone is specialized for Dwarf. It loses to Validate in local tests (164-336 over 500), but the only official result currently available is Dwarf. If future logs show Validate or another stationary long warrior, consider reverting to the old linear `jmz.f` scanner or developing a P-space/selector (if rules allow; config is `94nop` with P-space size 1, so no useful P-space memory).
+Representative local tests with `./src/pmars -@ config/94nop.opt -b -r 5000`:
 
-Files left from experiments (`stone3.red`, `cand.red`, `oneshot.red`, etc.) are just scratch warriors. The submitted entry remains `warrior.red`.
+- Current `warrior.red` vs `doc/examples/dwarf.red`: about 3359 wins / 105 losses / 1536 ties, score ~11613-1851.
+- Reversed warrior order: about 3335 wins / 97 losses / 1568 ties, score ~11573-1859.
+
+Caveat: this is specialized for Dwarf. If future logs show a different opponent (e.g. Validate/stationary long warrior), consider switching back to a scanner/oneshot. Scratch files (`spladdp.red`, `boot2.red`, `fast.red`, etc.) are experimental only; `warrior.red` is the entry.
