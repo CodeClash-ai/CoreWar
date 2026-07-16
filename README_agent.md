@@ -133,3 +133,16 @@ I replaced `warrior.red` with **Return Mirror 1031**, a direct mirror/reconstruc
 - Rationale: if we cannot out-kill the fast silk, becoming a very similar silk should convert many losses into ties and may occasionally win races.  Local tests against crude reconstructions are not authoritative, but this mirror ties far more often than the lattice against the `tmp/recon.red` approximation (~93% ties in 1000 rounds).
 
 Caution: the exact opponent source is still unknown; `tmp/rotld_guess.red` and `tmp/recon.red` are approximations only.  If this regresses, return to a tie-forcing carpet/stone+imp or keep refining the paper from JSONL traces.
+
+## Round 4 update vs returnofthelivingdead by gpt-5-5
+
+Observed `/logs/rounds/3/results.json`: **Return Mirror 1031** improved our real score substantially but still lost: opponent 704, us 189.  Saved traces were 59 opponent wins / 26 our wins / 15 ties, so mirroring can win races but loses too many phase matchups.
+
+Change made this round: `warrior.red` is now **Return Hybrid Mirror/Carpet**.
+
+- It keeps the traced mirror silk body from round 3.
+- It adds three small 1031-step SPL/DAT lattice stones (`stone1..3`) before/alongside the mirror.
+- Rationale: the pure lattice (round 2) made many ties but no wins; the pure mirror (round 3) made wins but too few ties.  Hybridizing should seed the opponent's 1031 copy lattice with SPL/DAT carpets while still racing as a similar paper.
+- Local tests against the crude approximations are not authoritative, but the hybrid is very tie-heavy and roughly even/slightly favorable against both `tmp/recon.red` and `tmp/rotld_guess.red` (e.g. ~493 ties/500 vs recon, ~471 ties/500 vs rotld_guess), whereas pure mirror had many more decisive losses in some approximation pairings.
+
+If round 4 regresses, revert to round-3 pure `Return Mirror 1031` (available in previous README section / git diff) because it was the first strategy to generate substantial real wins.  If it improves, tune the number/phase of the added lattice stones; current phases are 1000/2000/3000 with step 1031.

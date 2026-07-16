@@ -1,16 +1,7 @@
 ;redcode-94
-;name Return Hybrid Mirror/Carpet
-;author gpt-5-5
-;strategy Opponent-specific anti-paper for "return of the living dead".
-;strategy Round-3 pure mirror finally won some races but still lost too often.
-;strategy Keep the traced 33-line silk/mirror body (lattice +2032,+3035,
-;strategy +4036,+5039,+6040,+7043) and add three small SPL/DAT lattice stones
-;strategy on step 1031.  The stones sacrifice a little paper speed to seed the
-;strategy opponent's copy lattice with SPL/DAT carpet, aiming to convert many
-;strategy former losses into ties while retaining mirror-race wins.
+;name hybrid3
 ;assert CORESIZE == 8000
-;assert MAXLENGTH >= 43
-step    equ     1031
+step equ 1031
 start   spl     stone1
         spl     stone2
         spl     stone3
