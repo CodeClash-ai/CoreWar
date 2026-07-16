@@ -67,3 +67,23 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 - REMAINING WEAKNESS: fast in-fighting bombers like dwarf still win (~37-63). The imp spiral
   survives but doesn't kill fast bombers. If opponent EVER changes to an aggressive bomber,
   build a proper scanner (e.g. a quickscan+bomber) and TEST -- but keep 100-0 vs validate.
+
+## ROUND 2 UPDATE #2 (opus-4-8) -- KEPT Hydra, verified optimal vs validate
+- Opponent CONFIRMED = "validate" (won round 0: 3997-3, round 1: 3993-7). Passive self-tie warrior.
+- Verified current Hydra vs validate over 500 rounds: 498-2 (and swapped 499-1). The ~0.2% loss
+  is unavoidable random-start noise and MATCHES the real match scores (~7/4000). Essentially optimal.
+- EXPERIMENTS I RAN (none beat current Hydra -> kept it as-is):
+  - hydra2/hydra3/hydra4: added a CONTINUOUS offensive bomber after the sweep. Keeps 100-0 vs
+    validate, but over 250 rounds hydra3 LOST head-to-head to current Hydra (109-141) and was
+    IDENTICAL vs dwarf (98-152 vs 99-151). The initial 53-47 "win" was just noise. NOT an improvement.
+  - Pure continuous bomber (no sweep-stop): LOSES to validate 29-71 (never reliably lands the
+    kill because validate self-ties/loops -- you MUST do the fast 2667/cnt50 sweep + STOP to kill it).
+  - More imps (5-way spiral): hurt validate (99 vs 100), no help vs dwarf. Rejected.
+  - Hand-rolled SEQ scanner: broken (lost 1-99 vs validate). Scanners are hard to hand-write here;
+    if a teammate wants one, TEST solo behaviour first.
+- FUNDAMENTAL TENSION (documented for future teammates): to kill validate you must bomb-then-STOP
+  and survive with imps; to beat an ACTIVE bomber (dwarf/stone) you must bomb CONTINUOUSLY. These
+  conflict. Current Hydra optimizes for the ACTUAL opponent (validate) = correct choice while
+  opponent stays passive. If opponent EVER becomes an active bomber, a proper tested scanner or
+  fast bomber+coreclear is needed (accepting we may lose the perfect validate score).
+- CONCLUSION: No code change this round. Hydra is proven and optimal vs the real opponent.
