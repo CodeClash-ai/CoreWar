@@ -2,30 +2,31 @@
 
 Current submitted warrior: `warrior.red` = **Maximum Carpet Janitor**.
 
-Opponent context:
+Current opponent context (rounds 0-1 logs):
 
-- We are on the pspace ladder rung. The opponent source is the passive starter `P-space demo` by Stefan (`git show adfa5f0:warrior.red`).
-- The saved replay traces in `/logs/rounds/0` show the opponent still does not attack; after its P-space bookkeeping it parks on `jmp 0` forever.
-- Earlier entries already won 100%; the main improvement available for this fixed matchup is reducing kill time / avoiding any tie risk.
+- The current ladder opponent is `Validate 1.1R` by Stefan Strack (`doc/examples/validate.red`).
+- `/logs/rounds/0/results.json` and `/logs/rounds/1/results.json` both show `gpt-5-5` beating `validate` 1000-0.
+- Saved traces in `/logs/rounds/1` show Validate briefly runs its compliance-test process tree (peak 3 procs), then self-ties/autodestructs if disturbed. Our DAT carpet kills it reliably.
 
 Current strategy:
 
-- Fully matchup-specialized, not a general-purpose Core War warrior.
+- Still matchup-specialized, not a general-purpose Core War warrior.
 - Uses the full 100-instruction pMARS length budget as an unrolled bidirectional carpet.
-- `fptr` and `bptr` start just outside our own code / the legal minimum start separation (current offsets +99 and -100) and write `DAT.F #0,#0` outward in both directions.
+- `fptr` and `bptr` start just outside our own code / the legal minimum start separation (current first bombed cells are +100 and -100 relative to our load origin) and write `DAT.F #0,#0` outward in both directions.
 - There are 48 forward + 48 backward `mov` bombs per loop, plus two pointer cells, a loop jump, and the bomb = 100 instructions.
+- This has tested 100% against both the previous passive P-space demo (`git show adfa5f0:warrior.red`) and the current Validate warrior.
 
-Validation performed this round:
+Validation to rerun if needed:
 
 ```sh
 ./src/pmars -A warrior.red
-./src/pmars -b -r 5000 warrior.red <(git show adfa5f0:warrior.red)
-# Maximum Carpet Janitor scores 15000, P-space demo scores 0, Results: 5000 0 0
-./src/pmars -b -r 5000 <(git show adfa5f0:warrior.red) warrior.red
-# P-space demo scores 0, Maximum Carpet Janitor scores 15000, Results: 0 5000 0
+./src/pmars -b -r 5000 warrior.red doc/examples/validate.red
+# Maximum Carpet Janitor scores 15000, Validate 1.1R scores 0, Results: 5000 0 0
+./src/pmars -b -r 5000 doc/examples/validate.red warrior.red
+# Validate 1.1R scores 0, Maximum Carpet Janitor scores 15000, Results: 0 5000 0
 ```
 
 Caution for future teammates:
 
-- This is deliberately fragile against active stones/papers/imps/scanners. If logs show the opponent changed away from the passive P-space demo, replace it with a real general warrior rather than further optimizing the DAT carpet.
-- If still on the same pspace opponent, keeping this warrior is likely optimal enough: it has tested 100% from both player orders.
+- If logs still show `validate`, keeping this warrior is likely safest: we already have a perfect score.
+- If future logs show a real active opponent (stone/paper/imp/scanner), replace this fragile DAT carpet with a genuine general warrior; it is optimized for passive/self-testing opponents only.
