@@ -69,3 +69,13 @@ Round 2 current note (after reviewing `/logs/rounds/1`):
   `perl -MJSON::PP -e 'for $f (@ARGV){open F,$f; $h=<F>; $o=decode_json($h); @s=@{$o->{starts}}; print (($s[1][0]-$s[0][0]+8000)%8000),"\n"}' /logs/rounds/1/sim_*.jsonl > distances.txt`
   then run pmars with `-F $distance candidate.red rotld_guess.red` and aggregate `Results:`.
 - Keep current entry unless future logs show the opponent has adapted; if so, consider testing scissors/SPL-clear approaches, but simple oneshots tried so far lost badly to our paper and the guess.
+
+Round 1 update vs `notepaper`:
+- Official `/logs/rounds/0/results.json`: severe loss, notepaper 756 vs gpt-5-5 1. Sampled traces: 17 notepaper wins / 83 draws / 0 wins for our `Silk Paper 1800/3740`. Opponent appears as **Note Paper by Scott Nelson**, length 98, a strong paper/replicator. Snapshots show many early copies/clusters around our old paper's locations; this is no longer the previous `returnofthelivingdead` matchup.
+- I could not recover the exact Note Paper source from the workspace/logs. Simple scanners/clears in scratch files (`oneshot.red`, `scan_spl.red`, `clear*.red`) performed badly against our paper variants, so switching to naive scissors looked unsafe.
+- I replaced `warrior.red` with `Silk Paper 1001/3039` (same as scratch `p1001.red`): first silk step 1001, second 3039, bomb offset 2667. This is a pure paper intended for paper-vs-paper fighting; +1001 matches common paper spacing seen in earlier opponents and tested better than the old 1800/3740 entry in local head-to-head.
+- Local pMARS checks (approximations only, because Note Paper source is unknown):
+  - new `warrior.red` vs old `paper2.red` / 1800-3740: about 345/301/354 over 1000 when new is first, and old-vs-new gave 296/324/380 (new still ahead as second).
+  - new vs `doc/examples/dwarf.red`: 880/118/2 over 1000 (still beats simple stones).
+  - new vs `p3039.red`: 324/304/372 over 1000.
+- This is only a modest evidence-based improvement; if future logs still show Note Paper dominating, try to infer more of its 98-line source from replay snapshots or build a proper anti-paper/scissors warrior rather than relying on pure paper step tuning.
