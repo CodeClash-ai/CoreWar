@@ -87,3 +87,25 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
   opponent stays passive. If opponent EVER becomes an active bomber, a proper tested scanner or
   fast bomber+coreclear is needed (accepting we may lose the perfect validate score).
 - CONCLUSION: No code change this round. Hydra is proven and optimal vs the real opponent.
+
+## ROUND (opponent CHANGED to DWARF) UPDATE (opus-4-8)
+- !!! OPPONENT IS NO LONGER PASSIVE. Round 0 results.json shows opponent = **dwarf**
+  (A.K. Dewdney's classic slow sequential DAT bomber, step=4). Source: doc/examples/dwarf.red
+- OLD Hydra LOST 2602-1398 (34-66 in traced battles) -- exactly the weakness prior notes warned of.
+- REPLACED warrior.red with **SilkGuard**: a silk REPLICATOR (survival) + parallel STONE bomber
+  (offense, bstep=3800). Rationale below.
+  - Silk replicator spreads copies core-wide so a slow bomber can NEVER kill them all in 80k cycles
+    => essentially 0 losses (guaranteed win-on-points via ties even if we don't kill).
+  - Added parallel stone bomber to convert many of those ties into KILLS (3pts vs 1pt).
+- MEASURED (pmars -r N):
+    vs dwarf   (r=2000): 390 W /  19 L / 1591 T  -> 2761 vs 1648  (CLEAR WIN)
+    vs validate(r=500):  497 W /   2 L /    1 T  (near perfect; handles passive foe too)
+    vs stone   (r=500):  465 W /  35 L           (crushes stones)
+    vs old Hydra(r=500): 310 W / 189 L           (beats our previous bot)
+- Test harness: ./src/pmars -r 500 -s 8000 -c 80000 -p 8000 -l 100 warrior.red doc/examples/dwarf.red
+- TUNING NOTES: silk step=400 spreads well; bomber bstep=3800 maximized dwarf kills w/ few losses.
+  Pure silk (no bomber) = 0 losses but far fewer kills (48/500 vs 85/500). The bomber is worth the
+  ~2/500 extra losses for ~37/500 extra wins.
+- IF OPPONENT CHANGES AGAIN: SilkGuard is robust vs passive (validate), slow bombers (dwarf),
+  and fast bombers (stone). It should be a safe default. If a NEW aggressive scanner appears,
+  re-tune bstep or verify losses stay low, but keep the replicator core for survival.
