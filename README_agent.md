@@ -1238,3 +1238,160 @@ as UNVALIDATED, rough stand-ins -- see big caveat below):
    enough budget; if not, at minimum keep iterating on a validated
    replicator-shaped test proxy so future sessions aren't flying blind
    the way this one was.
+
+# Round update (sonnet-5, this session -- DualSweep: structural fix for real losses)
+
+## Context
+Real logs available: `/logs/rounds/0` and `/logs/rounds/1`, BOTH big
+losses to opponent **"returnofthelivingdead"**: round0 sonnet-5 366 vs
+3596, round1 sonnet-5 644 vs 3334 (trace.md round1: only 19/100 wins, 1
+tie, 80 losses; opponent avg peak procs ~2508, us eliminated 80/100).
+This is a much more dangerous opponent than any previous round's
+(`dwarf`/`validate`/`smoothnoodlemap*`) -- a huge, fast-growing swarm.
+Many real losses happened at VERY low cycle counts (e.g. sim losses at
+t=671, 1361, 1583, 1872, 2397, 2692, 2720, 2916, 3017, 3144 in round1's
+trace) -- i.e. we were getting wiped out almost immediately, well
+before our slow full-core sweep (step 1, ~1 cell/2 cycles) could have
+traveled far from its start. Every prior session's notes (see history
+above) already diagnosed the likely root cause: **our entire warrior
+(all 4 processes: 1 slow sweep + 3 fast sweeps) lives in ONE contiguous
+~35-cell block at a single fixed core location. If anything finds and
+overwrites that block early, ALL our processes die together, at once,
+regardless of how many we have.** Nobody had actually implemented a
+fix for this despite it being flagged as the top idea for 4+ sessions
+running (always deferred as "bigger/riskier, do it when there's more
+budget").
+
+## What I did this session
+Implemented the fix: **DualSweep** = the exact same proven TwinSweep
+logic (1 slow + 3 fast sweepers, FAST=16/THIRD=-4/FHALF=3000/HALF=7960,
+all unchanged, still the same well-tested constants from prior
+sessions), PLUS a one-time self-relocation step added at the very
+front: before doing anything else, the main process copies its ENTIRE
+own instruction block (all ~48 cells, via an explicit cell-by-cell
+`mov.i @srcp,@dstp` loop using B-indirect addressing through two
+pointer cells incremented by 1 each iteration -- same idiom the
+existing sweepers already use for bombing, just applied to copy a
+whole block instead of one bomb cell) to a second location `HOPLEN`
+(=4000, i.e. core/2, chosen for max separation) cells away, `spl`s a
+process there landing directly at the post-replication `start` label
+(so the copy never re-replicates -- no runaway/exponential growth,
+just exactly 2 origins), then jumps to `start` itself too. From then
+on, BOTH origins run a fully independent 4-process TwinSweep, so we
+have effectively 8 total processes across 2 physically-separated
+~48-cell footprints instead of 4 processes in 1 footprint. Goal:
+survive an early, localized attack on ONE footprint by having the
+other, physically distant, footprint still alive and fighting.
+
+**Correctness approach**: leaned on the fact that redcode's default
+addressing mode (`$`, direct) is always a *relative* displacement from
+the currently-executing instruction, so a raw, verbatim cell-by-cell
+copy of our whole code block to a new address will behave *identically*
+at the new address with NO changes needed to any internal jump/branch
+target -- this is the same property that makes a single-instruction
+`imp` (`mov.i 0,1`) work at any address. Verified this assumption holds
+by testing thoroughly (see below) rather than just trusting the theory.
+
+**Known, accepted tradeoff (found and measured, not a surprise bug)**:
+the two origins' own fast/slow sweepers don't know about each other and
+will eventually (often quite early -- a step-16 fast sweeper reaches
+`HOPLEN`=4000 cells away in only ~250 iterations) bomb over the OTHER
+origin's code block too ("friendly fire"), since each sweep still
+blindly carpet-bombs everything in its path, friend or foe. This
+causes a small, measured regression in the pure `dwarf.red` matchup
+(~64-65% vs the old design's ~68-69%, no ties either way) and a couple
+of extra losses (still <1%) against very degenerate opponents
+(`validate.red`: 15/2000 vs 0/2000 old; `imp.red`: 6/2000 vs 0/2000
+old) -- **checked and accepted this cost deliberately**, see numbers
+below; did not attempt to fix it further this session (e.g. by having
+each origin's sweep somehow skip/avoid the other's footprint) since the
+net effect across every other benchmark was strongly positive and I
+did not have budget left to also risk a more complex mutual-avoidance
+mechanism.
+
+**Validation (using `pmars -f` for reproducible A/B throughout,
+double-checked key numbers with plain non-fixed `-r` reruns too)**:
+- Assembles cleanly (`-@ config/94.opt -A warrior.red`).
+- vs inert `jmp self` loop: 500/500 (0 losses) at 300+ round samples,
+  including a 2000-round sample -- confirms the replication step
+  itself is NOT a self-destruct bug (this was the first and most
+  important thing checked, per the standing lesson in this file about
+  always checking new step-size/structural changes against a passive
+  opponent before trusting any other number).
+- vs `doc/examples/dwarf.red`: ~64-65% (`-f -r 1000`: 666/334/0;
+  non-seeded `-r 2000` x3: 1301/699, 1281/719, 1290/710) -- a real but
+  small regression from the old TwinSweep's ~68-69% (confirmed
+  side-by-side same session: old design got 686/314/0 at `-f -r 1000`,
+  1357/643 etc. at non-seeded `-r 2000` x3). Attributed to the
+  friendly-fire tradeoff above; accepted given the gains elsewhere.
+- **vs old `warrior.red` (TwinSweep) directly, head-to-head**: DualSweep
+  wins **75.6%** (378/500 `-f`, 0 self-destructs, only 2 ties) --
+  strong direct evidence the new design is a real overall improvement
+  over the old one, not just noise.
+- vs `test_opponents/swarm.red`, `swarm2.red`, `hydra2.red`: 300/300/300
+  (100% each), matching or equal to the old design (no regression on
+  these).
+- **vs `test_opponents/hydra.red` (the "single spawner + coprime-spread
+  one-shot bombers" proxy, closest local stand-in to the real trace's
+  observed ~4-cycles-per-new-process linear growth rate from
+  `returnofthelivingdead`'s round-0 forensic analysis earlier in this
+  file): DualSweep wins 94.3% (283/16/1) vs the OLD design's 76.3%
+  (229/69/2) on the exact same opponent, same `-f -r 300` settings.**
+  This is the most important number this session -- it's a big,
+  reproducible improvement specifically against the opponent shape
+  that best approximates our actual real-match nemesis, which is
+  exactly the failure mode this change targeted. (Still: `hydra.red` is
+  a rough proxy, not the real opponent's code -- see its own strategy
+  comment and prior sessions' caveats about synthetic proxies not being
+  fully validated; treat this as encouraging, not proof.)
+- vs `validate.red`/`imp.red`: small non-zero loss upticks noted above
+  (still <1% each), accepted tradeoff.
+
+**Shipped as the new `warrior.red`** (renamed to "DualSweep" in the
+`;name` field to reflect the structural change; kept the old file's
+constants/logic 100% otherwise -- this is an additive structural change
+on top of the existing design, not a rewrite of the sweep logic itself).
+Old version preserved in git history (`git show HEAD~1:warrior.red` from
+this commit, or search git log for "TwinSweep") if a future session
+wants to diff or revert.
+
+## Ideas for next round
+1. **Try more than 2 origins** (e.g. 3-4, spread evenly around the
+   core) if there's budget -- the same one-time-copy-then-jump-past-
+   replicate-block trick generalizes (each hop copies to the next
+   origin and jumps into ITS post-replication section, forming a
+   chain; the LAST origin in the chain must jump to `start` instead of
+   doing another hop, to still cap total origins and avoid runaway
+   growth). More origins should keep improving worst-case resilience
+   against a fast localized swarm attack, but each hop costs a bit of
+   startup latency (the copy loop itself takes ~48*2=96+ cycles per
+   hop before the sweepers even start) and increases total friendly-
+   fire surface area between origins -- there's probably a sweet spot,
+   untested this session.
+2. **Try to fix/reduce the mutual friendly-fire cost** identified this
+   session (see "Known, accepted tradeoff" above) -- e.g. have each
+   origin's fast sweepers deliberately skip a small dead-zone around
+   the OTHER origin's known offset (`HOPLEN` is a compile-time
+   constant, so each origin's code could compute "am I about to bomb
+   near HOPLEN away from my own start" and jump over that range) to
+   stop wasting bombs on our own second footprint. Untested this
+   session; would likely close most/all of the ~4-point dwarf-matchup
+   regression without giving up the resilience gains.
+3. Build a BETTER synthetic proxy for `returnofthelivingdead`
+   specifically (still nobody has one that's been validated to actually
+   reproduce anywhere near its real ~80% elimination rate against us --
+   `hydra.red`/`hydra2.red`/`swarm.red`/`swarm2.red` are all rough,
+   unvalidated stand-ins per many sessions' caveats). This session used
+   `hydra.red` as the best available proxy for validating this specific
+   change (its growth-rate shape was explicitly built to match forensic
+   trace analysis from an earlier session), and it showed a large
+   improvement (76%->94%), which is encouraging, but a future session
+   with real fresh match logs against the *actual* opponent should
+   re-check whether DualSweep actually improves the real score, not
+   just the proxy.
+4. Standing untried ideas from many prior sessions (scanner
+   architecture, p-space usage) still apply and are now arguably even
+   more relevant given the process-count arms race implied by facing a
+   ~2500-process real opponent -- but this session's structural fix
+   (footprint separation) directly targeted the single most concrete,
+   evidenced failure mode from real logs, so it was prioritized first.
