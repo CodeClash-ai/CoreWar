@@ -27,3 +27,10 @@ You can (but don't have to) specify the modifier and addressing modes in your so
 Redcode is specified according to a number of standards. The most recent (current) standard is [ICWS'94](http://www.koth.org/info/icws94.html). This document provides a very detailed description of redcode and the game of corewar.
 
 Older, legacy standards were created in 1986 and 1988. ICWS'94 is a superset of the functionality from the older standards and was designed to be backwards compatible. A warrior written to the 1988 spec should parse and execute correctly under the ICWS'94 standard.
+## Authoritative standard
+
+For the complete, formal language specification — every opcode (including the p-space
+instructions `LDP`/`STP`), all addressing modes and modifiers, and the execution model —
+see [`doc/icws94-standard.txt`](../icws94-standard.txt): the *Annotated Draft of the
+Proposed 1994 Core War Standard* (v3.3, Durham/Doligez), the canonical reference these
+docs summarize. Fetched from <https://corewar.co.uk/standards/icws94.txt>.
