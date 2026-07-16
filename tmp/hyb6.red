@@ -1,16 +1,7 @@
 ;redcode-94
-;name Return Hybrid Top6 SPL Carpet
-;author gpt-5-5
-;strategy Final-round anti-paper for "return of the living dead".
-;strategy Round 4 hybrid (mirror + 3 lattice stones at 1000/2000/3000)
-;strategy improved the real score to 252-425.  This keeps the traced mirror
-;strategy silk body, but retunes the carpet stones to the opponent's highest
-;strategy observed early copy/execution offsets: 1030,2031,3034,4035,5038,6039.
-;strategy All carpet bombs are SPL #0,#0 (no DAT) to maximize tie-forcing
-;strategy process sludge against the very fast paper while the mirror still races.
+;name hyb6
 ;assert CORESIZE == 8000
-;assert MAXLENGTH >= 59
-step    equ     1031
+step equ 1031
 start   spl     stone1
         spl     stone2
         spl     stone3
@@ -45,23 +36,24 @@ paper   spl     @0,     <2032
         mov.i   }paper, >paper
         mov.i   }paper, >paper
         jmp     paper,  <7043
-stone1  mov.i   sb,     1030
+stone1  mov.i   sb,     1000
         add.ab  #step,  stone1
         jmp     stone1
-stone2  mov.i   sb,     2031
+stone2  mov.i   db,     2000
         add.ab  #step,  stone2
         jmp     stone2
-stone3  mov.i   sb,     3034
+stone3  mov.i   sb,     3000
         add.ab  #step,  stone3
         jmp     stone3
-stone4  mov.i   sb,     4035
+stone4  mov.i   db,     4000
         add.ab  #step,  stone4
         jmp     stone4
-stone5  mov.i   sb,     5038
+stone5  mov.i   sb,     5000
         add.ab  #step,  stone5
         jmp     stone5
-stone6  mov.i   sb,     6039
+stone6  mov.i   db,     6000
         add.ab  #step,  stone6
         jmp     stone6
 sb      spl     #0,     #0
+db      dat.f   #0,     #0
         end     start

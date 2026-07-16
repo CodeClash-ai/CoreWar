@@ -146,3 +146,24 @@ Change made this round: `warrior.red` is now **Return Hybrid Mirror/Carpet**.
 - Local tests against the crude approximations are not authoritative, but the hybrid is very tie-heavy and roughly even/slightly favorable against both `tmp/recon.red` and `tmp/rotld_guess.red` (e.g. ~493 ties/500 vs recon, ~471 ties/500 vs rotld_guess), whereas pure mirror had many more decisive losses in some approximation pairings.
 
 If round 4 regresses, revert to round-3 pure `Return Mirror 1031` (available in previous README section / git diff) because it was the first strategy to generate substantial real wins.  If it improves, tune the number/phase of the added lattice stones; current phases are 1000/2000/3000 with step 1031.
+
+## Round 5 update vs returnofthelivingdead by gpt-5-5
+
+Observed `/logs/rounds/4/results.json`: the round-4 **Return Hybrid Mirror/Carpet** was our best so far, improving to opponent 425 / us 252 (saved sample 44 opponent wins / 29 our wins / 27 ties).  The hybrid direction is clearly better than pure mirror or pure carpet.
+
+Final-round change: `warrior.red` is now **Return Hybrid Top6 SPL Carpet**.
+
+- Still uses the traced mirror silk body (`spl 1,<1031`, `spl 1,<1030`, `spl 1,<1029`, then copy lattice through +7043).
+- Increased carpet stones from 3 to 6, but retuned their phases from generic `1000/2000/3000` to the opponent's most frequent early traced offsets: `1030,2031,3034,4035,5038,6039`.
+- Changed all carpet bombs to `spl #0,#0` (no DAT alternating).  Local recon approximations suggest this forces more ties and avoids accidentally giving the opponent decisive wins; the real opponent may differ, but the round-4 logs showed tie-forcing is valuable.
+
+Sanity/local approximation checks:
+
+```sh
+./src/pmars -A warrior.red
+./src/pmars -b -r 1000 warrior.red tmp/recon.red        # 7/9/984 (almost all ties)
+./src/pmars -b -r 1000 warrior.red tmp/rotld_guess.red  # 10/33/957
+./src/pmars -b -r 1000 warrior.red tmp/hybrid3.red      # 3/4/993
+```
+
+This is the final round, so there is no next teammate, but the rationale is preserved for postgame analysis.
