@@ -1,10 +1,12 @@
 ;redcode-94
-;name Smooth Dwarf Sweeper 187x12
+;name Smooth Dwarf Sweeper 187x20
 ;author gpt-5-5
-;strategy Specialized against observed Smooth Noodle Map: 12 parallel DAT bombers, step 187.
-;strategy Inferred opponent is a backwards Dwarf-like bomber (step -34, length 86).
-;strategy Step 187 keeps perfect exhaustive result vs classic Dwarf and improves local tests vs Smooth approx.
+;strategy Specialized against observed Smooth Noodle Map: 20 parallel DAT bombers, step 187.
+;strategy Opponent appears to be a backwards Dwarf-like bomber (step -34, length 86).
+;strategy Step 187 is strong vs both the classic Dwarf and the inferred Smooth bomber; using
+;strategy 20 loops (81 instructions) adds redundancy while staying under the 100-instruction limit.
 ;assert CORESIZE == 8000
+;assert MAXLENGTH >= 81
 start   spl     b1
         spl     b2
         spl     b3
@@ -16,6 +18,14 @@ start   spl     b1
         spl     b9
         spl     b10
         spl     b11
+        spl     b12
+        spl     b13
+        spl     b14
+        spl     b15
+        spl     b16
+        spl     b17
+        spl     b18
+        spl     b19
         jmp     b0
 b0      mov.i   bomb,   187
         add.ab  #187,  b0
@@ -53,5 +63,29 @@ b10     mov.i   bomb,   187
 b11     mov.i   bomb,   187
         add.ab  #187,  b11
         jmp     b11
+b12     mov.i   bomb,   187
+        add.ab  #187,  b12
+        jmp     b12
+b13     mov.i   bomb,   187
+        add.ab  #187,  b13
+        jmp     b13
+b14     mov.i   bomb,   187
+        add.ab  #187,  b14
+        jmp     b14
+b15     mov.i   bomb,   187
+        add.ab  #187,  b15
+        jmp     b15
+b16     mov.i   bomb,   187
+        add.ab  #187,  b16
+        jmp     b16
+b17     mov.i   bomb,   187
+        add.ab  #187,  b17
+        jmp     b17
+b18     mov.i   bomb,   187
+        add.ab  #187,  b18
+        jmp     b18
+b19     mov.i   bomb,   187
+        add.ab  #187,  b19
+        jmp     b19
 bomb    dat.f   #0,     #0
         end     start

@@ -1,42 +1,41 @@
 # Agent notes for CoreWar bot
 
-Current submitted warrior: `warrior.red` = **Dwarf Sweeper 3039x12**.
+Current submitted warrior: `warrior.red` = **Smooth Dwarf Sweeper 187x20**.
 
 Round/opponent context:
 
-- `/logs/rounds/0/results.json`: opponent is `dwarf`; our old `Maximum Carpet Janitor` lost 279-721.
-- Round 1 changed to anti-Dwarf `Dwarf Sweeper 3039x4`; `/logs/rounds/1/results.json` won 998-2 against `dwarf`.
-- The replay/log names continue to identify the opponent as the classic 4-line Dwarf by A. K. Dewdney:
-  `add #4,bmb; mov bmb,@bmb; jmp start; bmb dat #0,#0` (see `doc/examples/dwarf.red`).
+- The actual opponent in logs is `smoothnoodlemap`, banner `Smooth Noodle Map by Matt Hastings`.
+- Our anti-Dwarf family has been winning strongly:
+  - `/logs/rounds/0/results.json`: gpt-5-5 973, smoothnoodlemap 27.
+  - `/logs/rounds/1/results.json`: gpt-5-5 984, smoothnoodlemap 16.
+- Trace inference: opponent is a one-process backwards Dwarf-like bomber, length 86. It executes approximately:
+  `add.ab #-34, ptr; mov.i bomb, @ptr; jmp start; ptr/bomb ...` and bombs addresses decreasing by 34.
+- Round-1/previous warrior was `Smooth Dwarf Sweeper 187x12` and had only 2 losses in the 100 saved round-1 traces.
 
 Current strategy:
 
-- Matchup-specialized anti-Dwarf stone, not a general hill warrior.
-- Runs twelve 3-instruction DAT bombing loops, launched with `spl`, using step **3039** (coprime to 8000 and empirically very favorable against Dwarf's step-4 bombing pattern).
-- Compared with the Round-1 4-loop version, 12 loops add enough redundancy to remove the rare phase losses seen in random/exhaustive tests while staying well under the 100-instruction length limit.
+- Matchup-specialized anti-Smooth/Dwarf stone, not a general hill warrior.
+- Runs twenty independent 3-instruction DAT bombing loops, launched by `spl`, all with bombing step **187**.
+- 187 remains perfect in local tests against classic `doc/examples/dwarf.red` under random and exhaustive `-P` starts, while also being very strong against inferred Smooth variants.
+- Increasing from 12 to 20 loops uses 81 instructions (under the 100 limit) and is intended to add process redundancy against rare phases where Smooth kills all loops.
 
-Validation run after the Round-2 edit:
+Useful local validation run this round:
 
 ```sh
 ./src/pmars -A warrior.red
 ./src/pmars -b -r 10000 warrior.red doc/examples/dwarf.red
-# Dwarf Sweeper 3039x12 scores 30000, Dwarf scores 0, Results: 10000 0 0
-./src/pmars -b -r 10000 doc/examples/dwarf.red warrior.red
-# Dwarf scores 0, Dwarf Sweeper 3039x12 scores 30000, Results: 0 10000 0
+# Results: 10000 0 0
 ./src/pmars -b -P warrior.red doc/examples/dwarf.red
-# Dwarf Sweeper 3039x12 scores 46806, Dwarf scores 0, Results: 15602 0 0
-./src/pmars -b -P doc/examples/dwarf.red warrior.red
-# Dwarf scores 0, Dwarf Sweeper 3039x12 scores 46806, Results: 0 15602 0
+# Results: 15602 0 0
 ```
 
-Other experiments/history:
+Approximation files left in `tmp/`:
 
-- Round-1 3039x4 was already strong but had rare losses: exhaustive fixed-position test was 15550 wins / 52 losses (depending on ordering), and round score was 998-2.
-- Quick tests this round with 8 loops still had 6 exhaustive fixed-position losses, while 12+ loops had 0 losses vs `doc/examples/dwarf.red` under current pMARS settings.
-- A simple silk from `doc/corewar-glossary.html` beat Dwarf about 76% wins but was worse than the anti-Dwarf stones.
+- `tmp/smooth_approx.red`: simple inferred Smooth with early pointer (perfectly beaten by 187x20 in local random tests).
+- `tmp/smooth_exactish.red`: alternative pointer placement matching observed early trace more closely; 187x20 wins about 94% random and 14732/15602 under `-P` against it. This approximation is imperfect; actual match logs were better (984-16 with 187x12).
+- `tmp/stone187x*.red`, `tmp/c*.red`, `tmp/t*.red`: generated test stones for step/loop experiments.
 
 Caution for future teammates:
 
-- If logs continue to show `dwarf`, keep this or tune around it; it appears perfect against the local classic Dwarf over all legal fixed starts.
-- If the opponent changes to `validate`, the very old DAT carpet had a perfect result, while anti-Dwarf stones were only moderately good.
-- If the opponent becomes an active general warrior, replace this with a more balanced paper/stone/imp hybrid; this file is deliberately opponent-specific and will not be robust on a mixed hill.
+- If logs still show `smoothnoodlemap`, keep/tune this specialized DAT-stone family. Steps 187, 73, 229, 263 were explored; 187 was the safest across Smooth approximation plus classic Dwarf.
+- If opponent changes to a replicator/paper or general hill warrior, replace this with a more balanced paper/stone/imp hybrid; this warrior is deliberately opponent-specific.

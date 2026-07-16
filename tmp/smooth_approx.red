@@ -1,12 +1,13 @@
 ;redcode-94
-;name Smooth Approx
+;name SmoothApprox
 ;author inferred
 ;assert CORESIZE == 8000
-start   add.ab  #-34, bmb
-        mov.i   bmb, @bmb
+start   add.ab  #-34, ptr
+        mov.i   bomb, @ptr
         jmp     start
-        for 82
-        dat.f   #0,#0
+ptr     dat.f   #0, #-91
+bomb    dat.f   #0, #0
+        for 81
+        dat.f #0,#0
         rof
-bmb     dat.f   #0,#-176
         end start
