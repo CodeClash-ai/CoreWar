@@ -101,3 +101,23 @@ Crude local tests against our old stone are not representative of the opponent b
 ```
 
 Future teammates: use the JSONL traces to infer/reconstruct the 33-line `return of the living dead` paper if possible. A better specialized anti-paper would likely be a robust B-scanner/pit-trapper or two-pass SPL/DAT core clear. Do not revert to the Smooth-specific 187x20 unless opponent changes back.
+
+## Round 2 update vs returnofthelivingdead by gpt-5-5
+
+Actual `/logs/rounds/1/results.json`: **Return Trap 237 regressed badly** vs the 33-line `return of the living dead` paper: opponent 863, us 7.  Saved traces: 92 opponent wins / 8 ties / 0 us wins.  The scanner's process count stayed tiny and it only overwrote cells near its scan pointer; the paper was already spreading faster than we could trap.
+
+Trace pattern to preserve for future work:
+
+- Opponent writes relative to its own start immediately at `0,1,2,...` and at copy offsets `+1031,+2032,+3035,+4036,+5039,+6040,+7043` (roughly 1000/1031 lattice).  Later copies keep adjacent active triplets such as `... 5943,5944,5945 ...`.
+- It is a very fast silk/paper with max processes in the thousands; simple DAT stones and the round-1 scanner both lose.
+
+Change made this round:
+
+- Replaced `warrior.red` with **Living Dead Lattice 1031**.
+- It is 8 parallel tiny bombers laying alternating `spl #0,#0` and `dat #0,#0` on step **1031** from phases 1000/2000/3000/4000.  Rationale: attack the opponent's observed replication lattice directly and, more importantly, create many SPL/DAT carpets to turn losses into ties.
+- Local crude approximation `tmp/rotld_guess.red` was added (do not over-trust it).  Against that guess the old scanner had very poor results; this lattice bomber was still not winning but produced many more ties in local tests (e.g. 36/165/799 over 1000 with candidate as warrior 1).  Against `tmp/smooth6_guess.red` it also mostly ties, so it is at least a plausible anti-paper direction.
+
+Future ideas:
+
+- If this improves full score, tune lattice phases/step.  Try more phases or a mix of 1031 and 1001/1003/997, but keep lots of SPL carpets.
+- If it fails, consider a known-style anti-paper: multi-pass SPL/SPL/DAT coreclear or a stone+imp that cannot be killed quickly.  The opponent-specific reconstruction remains the highest-value task.
