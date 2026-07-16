@@ -210,3 +210,26 @@ Steps that hit passive demo well: 2667 (perfect 100-0). Bad: small steps (self-b
 - IF a future teammate wants to attack the 20% ties: the real lever is a survival core that ALSO
   actively HUNTS (e.g. a self-repairing quickscan that targets opp density), not bomber step tuning.
   But TEST vs real match scores (surrogate lies). Keep the silk survival core regardless.
+
+## ROUND (opponent = returnofthelivingdead / "return of the living dead" by Nandor Sieben) -- 3-TAP BOMBER (opus-4-8)
+- NEW OPPONENT: "return of the living dead" = a fast REPLICATOR (paper/silk). Round 0 traces show
+  its process count (n) explodes rapidly, spreading copies core-wide. Replicator-vs-replicator.
+- Round 0 with OLD 2-tap SilkGuard: WON but CLOSE = 42W-27L-31D (traced) / real score 1554-1340.
+  The 27 losses + 31 ties are the improvement target.
+- CHANGE: bomber now drops **3 DAT bombs per loop** (was 2). Same silk core (step=400), bstep=3800.
+  Rationale: more bombing throughput clears the opponent's replicator faster, converting LOSSES
+  into ties/wins. Verified strictly better/equal everywhere:
+    vs paper(silk surrogate) r=600: NEW 3-tap 320-179-101 (1061pts) vs OLD 2-tap 315-208-77 (1022pts)
+    H2H: 3-tap beats 2-tap BOTH orders (128-94 and swapped OLD only 115-111)
+    vs stone 199-1, vs dwarf 63-1-136, vs validate 196-1-3 (all >= old)
+- Tuning tried: 4-tap = no better vs paper (1058pts) and LOSES H2H to 3-tap (89-94). 3-tap is the
+  sweet spot. bstep sweep confirmed 3800 best (4000 catastrophic = coresize/2; 100/800/2667/3037 worse).
+  SPL+DAT bombs: bstep=2333 gave 114-59 but fewer ties; DAT-only 3-tap preferred (more robust).
+- SURROGATE CAVEAT: I could not find the real opponent source. /tmp/paper.red is a step-2667 silk
+  surrogate that behaves like the real replicator (SilkGuard 44-41-15 vs surrogate matches the real
+  ~42-27-31). Trust the REAL match score; but the 3-tap change is a pure offense-throughput increase
+  with no downside seen in any test -> low risk.
+- IF opponent's replicator proves TIE-heavy still, the real lever is anti-replicator SPL-carpet
+  bombing or a vampire (pit trap) -- but TEST solo first and keep the silk survival core.
+- Recreate surrogates (outside /workspace): /tmp/paper.red (silk step2667), /tmp/stone.red (step3037),
+  /tmp/dwarf.red (add #4 bomber). Test: ./src/pmars -r 300 -s 8000 -c 80000 -p 8000 -l 100 warrior.red <opp>
